@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/black">
+
+    <!-- ======================== -->
+    <!-- HEADER CHUNG -->
+    <!-- ======================== -->
+    <LinearLayout
+        android:id="@+id/headerContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@color/darkGray"
+        android:paddingHorizontal="16dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:elevation="4dp">
+
+        <!-- Hàng 1: Logo -->
+        <TextView
+            android:id="@+id/tvHeaderTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Talkify"
+            android:textColor="@color/darkBlue"
+            android:textSize="26sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="6dp" />
+
+        <!-- Hàng 2: Khu vực có 2 trạng thái -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="48dp">
+
+            <!-- Trạng thái mặc định -->
+            <RelativeLayout
+                android:id="@+id/headerDefault"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical">
+
+                <!-- Avatar -->
+                <ImageView
+                    android:id="@+id/ivAvatar"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:src="@drawable/ic_user"
+                    android:scaleType="centerCrop"
+                    android:background="@drawable/circle_bg"
+                    android:layout_alignParentStart="true"
+                    android:layout_centerVertical="true" />
+
+                <!-- Nhóm icon bên phải -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:background="@drawable/rounded_blue_bg"
+                    android:layout_alignParentEnd="true">
+
+                    <!-- Icon Search -->
+                    <ImageView
+                        android:id="@+id/ivSearch"
+                        android:layout_width="35dp"
+                        android:layout_height="40dp"
+                        android:background="@drawable/rounded_blue_bg"
+                        android:padding="8dp"
+                        android:src="@drawable/ic_search"
+                        app:tint="@android:color/white"
+                        android:layout_marginEnd="2dp" />
+
+                    <!-- Icon QR -->
+                    <ImageView
+                        android:id="@+id/ivQrCode"
+                        android:layout_width="35dp"
+                        android:layout_height="35dp"
+                        android:background="@drawable/rounded_blue_bg"
+                        android:padding="8dp"
+                        android:src="@drawable/ic_qrcode"
+                        app:tint="@android:color/white"
+                        android:layout_marginEnd="2dp" />
+
+                    <!-- Icon Add -->
+                    <ImageView
+                        android:id="@+id/ivAddChat"
+                        android:layout_width="35dp"
+                        android:layout_height="35dp"
+                        android:background="@drawable/rounded_blue_bg"
+                        android:padding="7dp"
+                        android:src="@drawable/ic_add"
+                        app:tint="@android:color/white" />
+                </LinearLayout>
+            </RelativeLayout>
+
+            <!-- Trạng thái tìm kiếm -->
+            <RelativeLayout
+                android:id="@+id/headerSearch"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:visibility="gone">
+
+                <!-- Avatar -->
+                <ImageView
+                    android:id="@+id/ivAvatarSearch"
+                    android:layout_width="35dp"
+                    android:layout_height="35dp"
+                    android:src="@drawable/ic_user"
+                    android:scaleType="centerCrop"
+                    android:background="@drawable/circle_bg"
+                    android:layout_alignParentStart="true"
+                    android:layout_centerVertical="true" />
+
+                <!-- Thanh tìm kiếm -->
+                <LinearLayout
+                    android:id="@+id/searchContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:layout_toEndOf="@id/ivAvatarSearch"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/rounded_blue_bg"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="10dp">
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_search"
+                        app:tint="@android:color/white" />
+
+                    <EditText
+                        android:id="@+id/etSearch"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:hint="Tìm kiếm"
+                        android:background="@android:color/transparent"
+                        android:textColor="@android:color/white"
+                        app:hintTextColor="@color/mediumGray"
+                        android:paddingStart="8dp"
+                        android:singleLine="true"
+                        android:imeOptions="actionSearch" />
+
+                    <TextView
+                        android:id="@+id/btnCancelSearch"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Hủy"
+                        android:textColor="@android:color/white"
+                        android:textSize="16sp" />
+                </LinearLayout>
+            </RelativeLayout>
+        </FrameLayout>
+    </LinearLayout>
+
+    <!-- ======================== -->
+    <!-- DANH SÁCH CHAT -->
+    <!-- ======================== -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerChats"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:paddingTop="8dp"
+        android:clipToPadding="false" />
+</LinearLayout>

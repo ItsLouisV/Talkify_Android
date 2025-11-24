@@ -1,0 +1,4 @@
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <size android:height="0.5dp" />
+    <solid android:color="@color/darkGray"/> <!-- Màu xám nhẹ kiểu iOS -->
+</shape>

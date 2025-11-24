@@ -1,0 +1,49 @@
+<resources>
+    <string name="app_name">Talkify</string>
+    <string name="have_account_login">Already have an account? Login</string>
+    <string name="full_name">Full Name</string>
+    <string name="create_account">Create account</string>
+    <string name="email">Email or Username</string>
+    <string name="password">Password</string>
+    <string name="confirm_password">Confirm password</string>
+    <string name="login_google">Continue with Google</string>
+    <string name="login_facebook">Continue with Facebook</string>
+    <string name="no_account_register">No account? Register</string>
+    <string name="or">OR</string>
+    <string name="login">Login</string>
+    <string name="toggle_password">Toggle Password</string>
+    <string name="chats">Chats</string>
+    <string name="notifications">Notifications</string>
+    <string name="users">Users</string>
+    <string name="settings">Settings</string>
+    <string name="send_message">Send message</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="no_conv">Không có đoạn chat nào</string>
+    <string name="search">Tìm kiếm...</string>
+    <string name="cancel">Hủy</string>
+    <string name="back">Back</string>
+    <string name="type_a_message">Type a message...</string>
+    <string name="send">Send</string>
+    <string name="username">Username</string>
+    <string name="sub_text"><![CDATA[Software Developer | Android & Java]]></string>
+
+    <string name="settings_title">Settings</string>
+
+    <string name="settings_view_profile">Bấm để xem trang cá nhân</string>
+
+    <string name="settings_desc_proceed">Tiếp tục</string>
+    <string name="settings_desc_option_icon">Biểu tượng tùy chọn</string>
+
+    <string name="settings_account_privacy">Tài khoản &amp; Quyền riêng tư</string>
+    <string name="settings_notifications">Thông báo</string>
+    <string name="settings_messages_media">Tin nhắn &amp; Phương tiện</string>
+    <string name="settings_devices_sessions">Thiết bị &amp; Phiên đăng nhập</string>
+
+    <string name="settings_appearance">Giao diện</string>
+    <string name="settings_security">Bảo mật</string>
+    <string name="settings_two_factor_auth">Xác thực 2 yếu tố</string>
+    <string name="settings_data_sync">Đồng bộ dữ liệu</string>
+
+    <string name="settings_logout">Đăng xuất</string>
+</resources>

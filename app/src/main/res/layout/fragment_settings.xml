@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#000000"
+    android:padding="20dp"
+    tools:context=".Fragment.SettingsFragment">
+
+    <TextView
+        android:id="@+id/tvHeaderTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/settings_title"
+        android:textSize="32sp"
+        android:textColor="@android:color/white"
+        android:textStyle="bold"
+        android:paddingBottom="10dp"/>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="90dp">
+
+            <LinearLayout
+                android:id="@+id/layoutProfile"
+                android:layout_width="match_parent"
+                android:layout_height="80dp"
+                android:background="@drawable/bg_ios_group"
+                android:padding="15dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground">
+
+                <com.google.android.material.imageview.ShapeableImageView
+                    android:id="@+id/ivUserAvatar"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:src="@drawable/avatar_placeholder"
+                    android:scaleType="centerCrop"
+                    android:layout_marginEnd="15dp"
+                    app:shapeAppearanceOverlay="@style/CircleImageStyle"/>
+
+                <LinearLayout
+                    android:orientation="vertical"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1">
+
+                    <TextView
+                        android:id="@+id/tvFullName"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="FullName"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="@android:color/white"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/settings_view_profile"
+                        android:textSize="14sp"
+                        android:textColor="#9AA0A6"/>
+                </LinearLayout>
+
+                <ImageView
+                    android:src="@drawable/ic_right"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    app:tint="#9AA0A6"
+                    android:contentDescription="@string/settings_desc_proceed"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="15dp"
+                android:background="@drawable/bg_ios_group">
+
+                <include android:id="@+id/itemAccountPrivacy" layout="@layout/item_setting_option" />
+                <View android:layout_width="match_parent" android:layout_height="0.5dp" android:background="@color/mediumGray" />
+                <include android:id="@+id/itemNotifications" layout="@layout/item_setting_option" />
+                <View android:layout_width="match_parent" android:layout_height="0.5dp" android:background="@color/mediumGray" />
+                <include android:id="@+id/itemMessagesMedia" layout="@layout/item_setting_option" />
+                <View android:layout_width="match_parent" android:layout_height="0.5dp" android:background="@color/mediumGray" />
+                <include android:id="@+id/itemDevicesSessions" layout="@layout/item_setting_option" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="15dp"
+                android:background="@drawable/bg_ios_group">
+
+                <include android:id="@+id/itemAppearance" layout="@layout/item_setting_option" />
+
+            </LinearLayout>
+
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="15dp"
+                android:background="@drawable/bg_ios_group">
+
+                <include android:id="@+id/itemSecurity" layout="@layout/item_setting_option" />
+                <View android:layout_width="match_parent" android:layout_height="0.5dp" android:background="@color/mediumGray"/>
+                <include android:id="@+id/itemTwoFactorAuth" layout="@layout/item_setting_option" />
+                <View android:layout_width="match_parent" android:layout_height="0.5dp" android:background="@color/mediumGray"/>
+                <include android:id="@+id/itemDataSync" layout="@layout/item_setting_option" />
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/btnLogout"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginTop="20dp"
+                android:text="@string/settings_logout"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                android:background="@drawable/bg_btn_red"
+                app:backgroundTint="@null"
+                android:textAllCaps="false"/>
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>

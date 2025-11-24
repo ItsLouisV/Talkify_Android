@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.appcompat.widget.Toolbar
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/toolbar_search"
+    android:layout_width="match_parent"
+    android:layout_height="?attr/actionBarSize"
+    android:background="#1C1C1E"
+    app:contentInsetStart="0dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <ImageView
+            android:id="@+id/ivCloseSearch"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:src="@drawable/ic_close"
+            app:tint="@color/mediumBlue"
+            android:paddingHorizontal="10dp"
+            android:background="?attr/selectableItemBackgroundBorderless"/>
+
+        <EditText
+            android:id="@+id/etSearch"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="Tìm kiếm tin nhắn"
+            android:background="@drawable/bg_input"
+            android:textColor="@android:color/white"
+            android:textColorHint="@android:color/darker_gray"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="8dp"
+            android:maxLines="1"
+            android:imeOptions="actionSearch"
+            android:inputType="text"/>
+
+        <TextView
+            android:id="@+id/tvSearchCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0/0"
+            android:textColor="@android:color/darker_gray"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"/>
+
+        <ImageView
+            android:id="@+id/ivSearchUp"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:src="@drawable/ic_up"
+            app:tint="@android:color/darker_gray"
+            android:padding="5dp"/>
+
+        <ImageView
+            android:id="@+id/ivSearchDown"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:src="@drawable/ic_down"
+            app:tint="@android:color/darker_gray"
+            android:padding="5dp"
+            android:layout_marginEnd="8dp"/>
+
+    </LinearLayout>
+</androidx.appcompat.widget.Toolbar>

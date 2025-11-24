@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000"
+    tools:context=".ui.ChatDetailActivity">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="#1C1C1E"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <ViewFlipper
+            android:id="@+id/toolbarFlipper"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize">
+
+            <include layout="@layout/chat_toolbar_main" />
+
+            <include layout="@layout/chat_toolbar_search" />
+
+        </ViewFlipper>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_view_messages"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:padding="10dp"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        app:stackFromEnd="true"
+        app:layout_constraintTop_toBottomOf="@id/appBarLayout"
+        app:layout_constraintBottom_toTopOf="@+id/inputViewFlipper"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:listitem="@layout/item_message_sent"/>
+
+    <ViewFlipper
+        android:id="@+id/inputViewFlipper"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="#1C1C1E"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingVertical="8dp"
+            android:paddingHorizontal="12dp"
+            android:gravity="center_vertical">
+
+        <ImageView
+            android:id="@+id/ivShowAttachments"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:src="@drawable/ic_add"
+            app:tint="@color/mediumBlue"
+            android:layout_marginEnd="8dp"
+            android:padding="7dp"
+            android:background="?attr/selectableItemBackgroundBorderless"/>
+
+        <EditText
+            android:id="@+id/etMessageInput"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="Type a message..."
+            android:textColor="@android:color/white"
+            android:textColorHint="@android:color/darker_gray"
+            android:background="@drawable/bg_input"
+            android:padding="12dp"
+            android:maxLines="4"/>
+
+        <ImageView
+            android:id="@+id/btnSend"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/ic_send"
+            android:padding="8dp"
+            android:layout_marginStart="8dp"
+            app:tint="@color/mediumBlue"
+            android:background="?attr/selectableItemBackgroundBorderless"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingVertical="8dp"
+            android:paddingHorizontal="12dp"
+            android:gravity="center_vertical"
+            android:baselineAligned="false">
+
+        <ImageView
+            android:id="@+id/ivHideAttachments"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:src="@drawable/ic_close"
+            app:tint="@color/mediumBlue"
+            android:layout_marginEnd="8dp"
+            android:padding="5dp"
+            android:background="?attr/selectableItemBackgroundBorderless"/>
+
+        <ImageView
+            android:id="@+id/ivLink"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginStart="8dp"
+            android:padding="5dp"
+            android:src="@drawable/ic_link"
+            app:tint="@android:color/white"
+            android:background="?attr/selectableItemBackgroundBorderless"/>
+        <ImageView
+            android:id="@+id/ivCamera"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginStart="8dp"
+            android:padding="5dp"
+            android:src="@drawable/ic_camera"
+            app:tint="@android:color/white"
+            android:background="?attr/selectableItemBackgroundBorderless"/>
+        <ImageView
+            android:id="@+id/ivGallery"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginStart="8dp"
+            android:padding="6dp"
+            android:src="@drawable/ic_gallery"
+            app:tint="@android:color/white"
+            android:background="?attr/selectableItemBackgroundBorderless"/>
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <ImageView
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:padding="8dp"
+            android:layout_marginStart="8dp"
+            android:visibility="invisible"/>
+        </LinearLayout>
+
+    </ViewFlipper>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+
+    <!-- Màu nền -->
+    <solid android:color="@color/darkBlue" />
+
+    <!-- Bo góc giống nút Google -->
+    <corners android:radius="10dp" /> <!-- tùy chỉnh như nút Google -->
+
+    <!-- Tùy chọn: thêm stroke -->
+    <stroke
+        android:width="1dp"
+        android:color="@color/darkBlue" /> <!-- nếu muốn viền nhẹ -->
+</shape>

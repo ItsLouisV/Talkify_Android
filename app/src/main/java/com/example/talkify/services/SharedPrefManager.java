@@ -13,6 +13,7 @@ public class SharedPrefManager {
     private static final String KEY_USER_ID = "user_id";
     private static final String KEY_EMAIL = "user_email";
     private static final String KEY_TOKEN = "access_token";
+    private static final String KEY_REFRESH_TOKEN = "refresh_token";
     private static final String KEY_LOGGED_IN = "is_logged_in";
 
     // =======================================
@@ -20,6 +21,10 @@ public class SharedPrefManager {
     // =======================================
     private static final String KEY_FULL_NAME = "user_full_name";
     private static final String KEY_AVATAR_URL = "user_avatar_url";
+    private static final String KEY_USER_NAME = "user_user_name";
+    private static final String KEY_BIO = "user_bio";
+    private static final String KEY_DOB = "user_dob";
+    private static final String KEY_GENDER = "user_gender";
 
     private SharedPrefManager(Context context) {
         prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
@@ -33,14 +38,15 @@ public class SharedPrefManager {
     }
 
     /**
-     * HÀM MỚI (Rất quan trọng): Dùng hàm này khi Login thành công
+     * Dùng hàm này khi Login thành công
      */
-    public void saveUserSession(String userId, String email, String token, String fullName, String avatarUrl) {
+    public void saveUserSession(String userId, String email, String token, String refreshToken, String fullName, String avatarUrl) {
         SharedPreferences.Editor editor = prefs.edit();
         editor.putBoolean(KEY_LOGGED_IN, true);
         editor.putString(KEY_USER_ID, userId);
         editor.putString(KEY_EMAIL, email);
         editor.putString(KEY_TOKEN, token);
+        editor.putString(KEY_REFRESH_TOKEN, refreshToken); // Lưu Refresh Token
         editor.putString(KEY_FULL_NAME, fullName); // <-- Lưu FullName
         editor.putString(KEY_AVATAR_URL, avatarUrl); // <-- Lưu Avatar
         editor.apply();
@@ -71,6 +77,18 @@ public class SharedPrefManager {
         return prefs.getString(KEY_TOKEN, null);
     }
 
+    // RefreshToken
+    public String getRefreshToken() {
+        return prefs.getString(KEY_REFRESH_TOKEN, null);
+    }
+
+    // Hàm lưu Refresh Token mới khi được cấp lại
+    public void saveRefreshToken(String refreshToken) {
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putString(KEY_REFRESH_TOKEN, refreshToken);
+        editor.apply();
+    }
+
     // Login status
     public void setLoggedIn(boolean loggedIn) {
         prefs.edit().putBoolean(KEY_LOGGED_IN, loggedIn).apply();
@@ -97,6 +115,18 @@ public class SharedPrefManager {
     }
     public String getUserAvatarUrl() {
         return prefs.getString(KEY_AVATAR_URL, null); // (File SettingsFragment đã gọi hàm này)
+    }
+
+    public void saveUserName(String userName) {
+        prefs.edit().putString(KEY_USER_NAME, userName).apply();
+    }
+    public String getUserName() {
+        return prefs.getString(KEY_USER_NAME, null);
+    }
+
+    // Bio
+    public void saveUserBio(String bio) {
+        prefs.edit().putString(KEY_BIO, bio).apply();
     }
 
     public void clearUserSession() {

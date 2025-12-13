@@ -66,9 +66,6 @@ public class LoginActivity extends AppCompatActivity {
         setupGoogleSignIn();
     }
 
-    // (initViews, setupListeners, setupGoogleSignIn, signInWithGoogle,
-    //  googleSignInLauncher, handleSignInResult... giữ nguyên 100% code cũ)
-
     private void initViews() {
         etEmail = findViewById(R.id.etEmail);
         etPassword = findViewById(R.id.etPassword);
@@ -164,6 +161,7 @@ public class LoginActivity extends AppCompatActivity {
                 if (response.isSuccessful()) {
                     JsonObject resJson = gson.fromJson(resStr, JsonObject.class);
                     String accessToken = resJson.get("access_token").getAsString();
+                    String refreshToken = resJson.get("refresh_token").getAsString();
                     JsonObject userObj = resJson.getAsJsonObject("user");
                     String userId = userObj.get("id").getAsString();
                     String email = userObj.get("email").getAsString();
@@ -171,7 +169,7 @@ public class LoginActivity extends AppCompatActivity {
                     // === SỬA ĐỔI ===
                     // (Không lưu và chuyển màn hình vội)
                     // (Gọi Bước 2: Lấy hồ sơ)
-                    fetchUserProfileAndProceed(userId, email, accessToken);
+                    fetchUserProfileAndProceed(userId, email, accessToken, refreshToken);
 
                 } else {
                     Log.e(TAG, "Supabase Google login failed: " + resStr);
@@ -210,13 +208,14 @@ public class LoginActivity extends AppCompatActivity {
                 if (response.isSuccessful()) {
                     JsonObject resJson = gson.fromJson(resStr, JsonObject.class);
                     String accessToken = resJson.get("access_token").getAsString();
+                    String refreshToken = resJson.get("refresh_token").getAsString();
                     JsonObject userObj = resJson.getAsJsonObject("user");
                     String userId = userObj.get("id").getAsString();
 
                     // === SỬA ĐỔI ===
                     // (Không lưu và chuyển màn hình vội)
                     // (Gọi Bước 2: Lấy hồ sơ)
-                    fetchUserProfileAndProceed(userId, email, accessToken);
+                    fetchUserProfileAndProceed(userId, email, accessToken, refreshToken);
 
                 } else {
                     runOnUiThread(() ->
@@ -231,7 +230,7 @@ public class LoginActivity extends AppCompatActivity {
      * HÀM MỚI (BƯỚC 2 & 3): Lấy Hồ sơ và Lưu Session
      * ==========================================================
      */
-    private void fetchUserProfileAndProceed(String userId, String email, String accessToken) {
+    private void fetchUserProfileAndProceed(String userId, String email, String accessToken, String refeshToken) {
         // (API call: GET /rest/v1/users?user_id=eq.{userId}&select=*)
         String url = SupabaseClient.URL + "/rest/v1/users?user_id=eq." + userId + "&select=*";
 
@@ -267,6 +266,7 @@ public class LoginActivity extends AppCompatActivity {
                                 userId,
                                 email,
                                 accessToken,
+                                refeshToken,
                                 fullName,
                                 avatarUrl
                         );

@@ -1,6 +1,7 @@
 package com.example.talkify.Fragment;
 
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -13,11 +14,13 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.text.format.DateUtils;
 import android.util.Log;
+import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.recyclerview.widget.DividerItemDecoration;
@@ -26,11 +29,9 @@ import androidx.core.content.ContextCompat;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.talkify.R;
@@ -51,7 +52,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -100,6 +100,10 @@ public class ChatsFragment extends Fragment {
             intent.putExtra("CONVERSATION_ID", item.getConversationId());
             intent.putExtra("CONVERSATION_NAME", item.getName());
             intent.putExtra("CONVERSATION_AVATAR", item.getAvatarUrl());
+
+            // Truyền trạng thái nhóm sang màn hình chat
+            intent.putExtra("IS_GROUP", item.isGroup());
+
             startActivity(intent);
         });
         recyclerChats.setAdapter(conversationAdapter);
@@ -113,10 +117,10 @@ public class ChatsFragment extends Fragment {
         }
 
         // --- CÀI ĐẶT TÍNH NĂNG VUỐT ĐỂ XÓA ---
-        setupSwipeToDelete();
+        setupSwipeActions();
 
-        // 3. Gán sự kiện Click
-        ivAddChat.setOnClickListener(v -> startActivity(new Intent(getContext(), SearchActivity.class)));
+        // Gọi hàm hiển thị PopupMenu
+        ivAddChat.setOnClickListener(v -> showAddOptions(v));
 
         ivSearch.setOnClickListener(v -> showSearchHeader(true));
 
@@ -128,99 +132,203 @@ public class ChatsFragment extends Fragment {
         // 4. Các hàm khởi tạo dữ liệu
         setupSearchListener();
         loadCurrentUserAvatar();
-        loadConversations(null);
         setupRealtimeListener();
 
         return root;
     }
 
+    private void showAddOptions(View view) {
+        // Tạo PopupMenu gắn vào view (nút ivAddChat)
+        Context wrapper = new ContextThemeWrapper(getContext(), R.style.PopupMenuDark);
+        PopupMenu popupMenu = new PopupMenu(wrapper, view);
+
+        // Inflate (nạp) file menu
+        popupMenu.getMenuInflater().inflate(R.menu.menu_add_chat, popupMenu.getMenu());
+
+        // Bắt sự kiện khi chọn item
+        popupMenu.setOnMenuItemClickListener(item -> {
+            int id = item.getItemId();
+
+            if (id == R.id.action_search_friend) {
+                // Xử lý: Chuyển sang màn hình tìm kiếm bạn bè
+                startActivity(new Intent(getContext(), SearchActivity.class));
+                return true;
+            }
+            else if (id == R.id.action_create_group) {
+                // === MỞ BOTTOM SHEET TẠO NHÓM ===
+
+                // 1. Khởi tạo BottomSheet
+                com.example.talkify.ui.CreateGroupBottomSheet bottomSheet = new com.example.talkify.ui.CreateGroupBottomSheet();
+
+                // 2. Lắng nghe sự kiện: Nếu tạo nhóm thành công thì load lại danh sách chat
+                bottomSheet.setOnGroupCreatedListener(() -> {
+                    loadConversations(null); // Load lại để hiện nhóm mới vừa tạo
+                });
+
+                // 3. Hiển thị lên màn hình
+                bottomSheet.show(getParentFragmentManager(), "create_group_sheet");
+
+                return true;
+            }
+
+            return false;
+        });
+
+        // Hiển thị menu
+        popupMenu.show();
+    }
+
     /**
      * CẤU HÌNH VUỐT SANG TRÁI ĐỂ XÓA
      */
-    private void setupSwipeToDelete() {
-        ItemTouchHelper.SimpleCallback simpleCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
+    private void setupSwipeActions() {
+        ItemTouchHelper.SimpleCallback simpleCallback =
+                new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
 
-            @Override
-            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder,
-                                  @NonNull RecyclerView.ViewHolder target) {
-                return false;
-            }
-
-            @Override
-            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
-                int position = viewHolder.getAdapterPosition();
-                ChatItem itemToDelete = chatList.get(position);
-
-                new AlertDialog.Builder(getContext())
-                        .setTitle("Xóa cuộc trò chuyện?")
-                        .setMessage("Bạn có chắc muốn xóa cuộc trò chuyện này không?")
-                        .setPositiveButton("Xóa", (dialog, which) -> {
-                            deleteConversationFromDB(itemToDelete.getConversationId(), position);
-                        })
-                        .setNegativeButton("Hủy", (dialog, which) -> {
-                            conversationAdapter.notifyItemChanged(position);
-                        })
-                        .setCancelable(false)
-                        .show();
-            }
-
-            @Override
-            public void onChildDraw(@NonNull Canvas canvas, @NonNull RecyclerView recyclerView,
-                                    @NonNull RecyclerView.ViewHolder viewHolder, float dX, float dY,
-                                    int actionState, boolean isCurrentlyActive) {
-
-                if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
-
-                    View itemView = viewHolder.itemView;
-
-                    float width = itemView.getWidth();
-                    float swipeProgress = Math.min(Math.abs(dX) / width, 1f);
-
-                    // --- NỀN ĐỎ (MỀM, BO CONG) ---
-                    Paint paint = new Paint();
-                    paint.setColor(Color.parseColor("#FF3B30")); // Đỏ iOS
-                    float radius = 46f;
-
-                    float left = itemView.getRight() + dX;
-                    float top = itemView.getTop();
-                    float right = itemView.getRight();
-                    float bottom = itemView.getBottom();
-
-                    canvas.drawRoundRect(left, top, right, bottom, radius, radius, paint);
-
-                    // --- ICON DELETE
-                    Drawable deleteIcon = ContextCompat.getDrawable(getContext(), R.drawable.ic_delete);
-                    if (deleteIcon != null) {
-                        int iconSize = deleteIcon.getIntrinsicWidth();
-                        int iconTop = itemView.getTop() + (itemView.getHeight() - iconSize) / 2;
-                        int iconBottom = iconTop + iconSize;
-                        int margin = 60;
-
-                        int iconLeft = itemView.getRight() - margin - iconSize;
-                        int iconRight = itemView.getRight() - margin;
-
-                        deleteIcon.setBounds(iconLeft, iconTop, iconRight, iconBottom);
-
-                        // Fade in theo độ vuốt
-                        deleteIcon.setAlpha((int) (255 * swipeProgress));
-
-                        deleteIcon.draw(canvas);
+                    @Override
+                    public boolean onMove(@NonNull RecyclerView recyclerView,
+                                          @NonNull RecyclerView.ViewHolder viewHolder,
+                                          @NonNull RecyclerView.ViewHolder target) {
+                        return false;
                     }
 
-                    // --- HIỆU ỨNG ĐÀN HỒI iOS ---
-                    float bounceOffset = (float) (Math.sin(swipeProgress * Math.PI) * 18);
-                    super.onChildDraw(canvas, recyclerView, viewHolder, dX - bounceOffset, dY,
-                            actionState, isCurrentlyActive);
-                    return;
-                }
+                    @Override
+                    public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+                        int position = viewHolder.getAdapterPosition();
+                        ChatItem item = chatList.get(position);
 
-                super.onChildDraw(canvas, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
-            }
-        };
+                        if (direction == ItemTouchHelper.LEFT) {
+                            // ==== VUỐT TRÁI → XOÁ ====
+                            showDeleteDialog(item, position);
+                        } else if (direction == ItemTouchHelper.RIGHT) {
+                            // ==== VUỐT PHẢI → GHIM ====
+                            showPinDialog(item, position);
+                        }
+                    }
+
+                    @Override
+                    public void onChildDraw(@NonNull Canvas canvas, @NonNull RecyclerView recyclerView,
+                                            @NonNull RecyclerView.ViewHolder viewHolder, float dX, float dY,
+                                            int actionState, boolean isCurrentlyActive) {
+
+                        if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
+
+                            View itemView = viewHolder.itemView;
+
+                            float width = itemView.getWidth();
+                            float swipeProgress = Math.min(Math.abs(dX) / width, 1f);
+
+                            Paint paint = new Paint();
+                            float radius = 46f;
+
+                            Drawable icon;
+                            int iconSize;
+                            int iconTop;
+                            int iconBottom;
+                            int iconLeft;
+                            int iconRight;
+                            int margin = 60;
+
+                            if (dX < 0) {
+                                //  VUỐT TRÁI → XOÁ
+                                paint.setColor(Color.parseColor("#FF3B30")); // Đỏ iOS
+
+                                float left = itemView.getRight() + dX;
+                                float top = itemView.getTop();
+                                float right = itemView.getRight();
+                                float bottom = itemView.getBottom();
+
+                                canvas.drawRoundRect(left, top, right, bottom, radius, radius, paint);
+
+                                icon = ContextCompat.getDrawable(getContext(), R.drawable.ic_trash);
+                                if (icon != null) {
+                                    iconSize = icon.getIntrinsicWidth();
+                                    iconTop = itemView.getTop() + (itemView.getHeight() - iconSize) / 2;
+                                    iconBottom = iconTop + iconSize;
+
+                                    iconLeft = itemView.getRight() - margin - iconSize;
+                                    iconRight = itemView.getRight() - margin;
+
+                                    icon.setBounds(iconLeft, iconTop, iconRight, iconBottom);
+                                    icon.setAlpha((int) (255 * swipeProgress));
+                                    icon.draw(canvas);
+                                }
+
+                            } else if (dX > 0) {
+                                //  VUỐT PHẢI → GHIM
+                                paint.setColor(Color.parseColor("#FFD60A")); // Vàng iOS cho Pin
+
+                                float left = itemView.getLeft();
+                                float top = itemView.getTop();
+                                float right = itemView.getLeft() + dX;
+                                float bottom = itemView.getBottom();
+
+                                canvas.drawRoundRect(left, top, right, bottom, radius, radius, paint);
+
+                                icon = ContextCompat.getDrawable(getContext(), R.drawable.ic_pin);
+                                if (icon != null) {
+                                    iconSize = icon.getIntrinsicWidth();
+                                    iconTop = itemView.getTop() + (itemView.getHeight() - iconSize) / 2;
+                                    iconBottom = iconTop + iconSize;
+
+                                    iconLeft = itemView.getLeft() + margin;
+                                    iconRight = iconLeft + iconSize;
+
+                                    icon.setBounds(iconLeft, iconTop, iconRight, iconBottom);
+                                    icon.setAlpha((int) (255 * swipeProgress));
+                                    icon.draw(canvas);
+                                }
+                            }
+
+                            // --- Hiệu ứng đàn hồi iOS ---
+                            float bounceOffset = (float) (Math.sin(swipeProgress * Math.PI) * 18);
+                            super.onChildDraw(canvas, recyclerView, viewHolder,
+                                    dX - Math.signum(dX) * bounceOffset,
+                                    dY,
+                                    actionState,
+                                    isCurrentlyActive);
+                            return;
+                        }
+
+                        super.onChildDraw(canvas, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
+                    }
+                };
 
         new ItemTouchHelper(simpleCallback).attachToRecyclerView(recyclerChats);
     }
 
+    // Hàm show dialog khi ghim
+    private void showPinDialog(ChatItem item, int position) {
+        boolean willPin = !item.isPinned(); // Nếu đang chưa ghim thì ghim, đang ghim thì bỏ ghim
+
+        new AlertDialog.Builder(getContext())
+                .setTitle(willPin ? "Ghim cuộc trò chuyện?" : "Bỏ ghim cuộc trò chuyện?")
+                .setMessage(willPin ? "Bạn có muốn ghim cuộc trò chuyện này lên đầu?" :
+                        "Bạn có muốn bỏ ghim cuộc trò chuyện này?")
+                .setPositiveButton(willPin ? "Ghim" : "Bỏ ghim", (dialog, which) -> {
+                    updatePinStatus(item, position, willPin);
+                })
+                .setNegativeButton("Hủy", (dialog, which) -> {
+                    conversationAdapter.notifyItemChanged(position);
+                })
+                .setCancelable(false)
+                .show();
+    }
+
+    // Hàm show dialog khi xóa
+    private void showDeleteDialog(ChatItem item, int position) {
+        new AlertDialog.Builder(getContext())
+                .setTitle("Xóa cuộc trò chuyện?")
+                .setMessage("Bạn có chắc muốn xóa cuộc trò chuyện này không?")
+                .setPositiveButton("Xóa", (dialog, which) -> {
+                    deleteConversationFromDB(item.getConversationId(), position);
+                })
+                .setNegativeButton("Hủy", (dialog, which) -> {
+                    conversationAdapter.notifyItemChanged(position);
+                })
+                .setCancelable(false)
+                .show();
+    }
 
     /**
      * Gọi API xóa cuộc hội thoại (xóa mềm)
@@ -278,6 +386,59 @@ public class ChatsFragment extends Fragment {
                     Toast.makeText(getContext(), "Lỗi mạng: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                     conversationAdapter.notifyItemChanged(position);
                 });
+            }
+        });
+    }
+
+    private void updatePinStatus(ChatItem item, int position, boolean pin) {
+        String userId = SharedPrefManager.getInstance(getContext()).getUserId();
+        String token = SharedPrefManager.getInstance(getContext()).getToken();
+        if (userId == null || token == null) return;
+
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Handler handler = new Handler(Looper.getMainLooper());
+
+        executor.execute(() -> {
+            try {
+                String urlString = SupabaseClient.URL + "/rest/v1/pinned_conversations";
+
+                HttpURLConnection conn;
+
+                if (pin) {
+                    conn = (HttpURLConnection) new URL(urlString).openConnection();
+                    conn.setRequestMethod("POST");
+                    conn.setRequestProperty("apikey", SupabaseClient.ANON_KEY);
+                    conn.setRequestProperty("Authorization", "Bearer " + token);
+                    conn.setRequestProperty("Content-Type", "application/json");
+                    conn.setDoOutput(true);
+
+                    String body = "{\"conversation_id\":\"" + item.getConversationId() + "\",\"user_id\":\"" + userId + "\"}";
+                    conn.getOutputStream().write(body.getBytes());
+                } else {
+                    // DELETE ghim
+                    urlString += "?conversation_id=eq." + item.getConversationId() + "&user_id=eq." + userId;
+
+                    conn = (HttpURLConnection) new URL(urlString).openConnection();
+                    conn.setRequestMethod("DELETE");
+                    conn.setRequestProperty("apikey", SupabaseClient.ANON_KEY);
+                    conn.setRequestProperty("Authorization", "Bearer " + token);
+                }
+
+                int code = conn.getResponseCode();
+
+                handler.post(() -> {
+                    if (code == 200 || code == 201 || code == 204) {
+                        item.setPinned(pin);
+                        loadConversations(null); // reload để sắp lại thứ tự
+                    } else {
+                        Toast.makeText(getContext(), "Lỗi ghim!", Toast.LENGTH_SHORT).show();
+                        conversationAdapter.notifyItemChanged(position);
+                    }
+                });
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                handler.post(() -> conversationAdapter.notifyItemChanged(position));
             }
         });
     }
@@ -345,14 +506,14 @@ public class ChatsFragment extends Fragment {
     }
 
     /**
-     * Hàm Load danh sách (Đã thêm LOG DEBUG chi tiết)
+     * Hàm Load danh sách
      */
     private void loadConversations(@Nullable String searchQuery) {
         String currentUserId = SharedPrefManager.getInstance(getContext()).getUserId();
         String userToken = SharedPrefManager.getInstance(getContext()).getToken();
 
         if (currentUserId == null || userToken == null) {
-            Log.e("DEBUG_CHAT", "Lỗi: User ID hoặc Token bị null. Chưa đăng nhập?");
+            Log.e("DEBUG_CHAT", "Lỗi: User ID hoặc Token bị null.");
             return;
         }
 
@@ -363,52 +524,91 @@ public class ChatsFragment extends Fragment {
             List<ChatItem> result = new ArrayList<>();
 
             try {
-                StringBuilder apiUrlBuilder = new StringBuilder(SupabaseClient.URL);
-                apiUrlBuilder.append("/rest/v1/conversations");
-                apiUrlBuilder.append("?select=");
-                apiUrlBuilder.append("conversation_id,type,updated_at,");
-                apiUrlBuilder.append("group_details(name,avatar_url),");
-                apiUrlBuilder.append("messages:messages(content,created_at,sender_id),");
-                apiUrlBuilder.append("conversation_participants(user_id,deleted_at,users(full_name,avatar_url))"); // Thêm deleted_at
-                apiUrlBuilder.append("&order=updated_at.desc.nullslast");
+                // 1. XÂY DỰNG QUERY STRING
+                String selectQuery =
+                        "conversation_id,type,updated_at," +
+                                "group_details(name,avatar_url)," +
+                                "messages:messages(content,created_at,sender_id,sender:users!messages_sender_id_fkey(full_name))," +
+                                "conversation_participants(user_id,deleted_at,users(full_name,avatar_url))," +
+                                // LẤY DỮ LIỆU GHIM
+                                "pinned_conversations(user_id)";
 
-                URL url = new URL(apiUrlBuilder.toString());
-                Log.d("DEBUG_CHAT", "URL Gọi API: " + url);
+                StringBuilder urlBuilder = new StringBuilder(SupabaseClient.URL);
+                urlBuilder.append("/rest/v1/conversations");
+                urlBuilder.append("?select=").append(selectQuery);
+                urlBuilder.append("&order=updated_at.desc.nullslast");
+
+                String urlString = urlBuilder.toString().replace(" ", "%20");
+
+                URL url = new URL(urlString);
+                Log.d("DEBUG_CHAT", "URL Request: " + url);
 
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestProperty("apikey", SupabaseClient.ANON_KEY);
                 conn.setRequestProperty("Authorization", "Bearer " + userToken);
                 conn.setRequestMethod("GET");
+                conn.setConnectTimeout(10000);
+                conn.setReadTimeout(10000);
 
                 int responseCode = conn.getResponseCode();
-                String line;
-                if (responseCode == 200) {
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-                    StringBuilder sb = new StringBuilder();
-                    while ((line = reader.readLine()) != null) sb.append(line);
-                    reader.close();
 
-                    JSONArray array = new JSONArray(sb.toString());
+                java.io.InputStream stream;
+                if (responseCode >= 200 && responseCode < 300) {
+                    stream = conn.getInputStream();
+                } else {
+                    stream = conn.getErrorStream();
+                }
+
+                if (stream == null) {
+                    Log.e("DEBUG_CHAT", "Lỗi: Stream bị NULL.");
+                    return;
+                }
+
+                BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
+                StringBuilder sb = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) sb.append(line);
+                reader.close();
+                String responseText = sb.toString();
+
+                if (responseCode == 200) {
+                    // --- PARSE JSON ---
+                    JSONArray array = new JSONArray(responseText);
                     for (int i = 0; i < array.length(); i++) {
                         JSONObject obj = array.getJSONObject(i);
 
+                        // A. Check xóa mềm
                         JSONArray participants = obj.optJSONArray("conversation_participants");
-                        boolean userDeleted = false;
+                        boolean shouldSkip = false;
+
                         if (participants != null) {
+                            // Mặc định coi như user không còn trong nhóm (đã rời/xóa), trừ khi tìm thấy mình và chưa xóa
+                            boolean amIMember = false;
                             for (int j = 0; j < participants.length(); j++) {
                                 JSONObject p = participants.getJSONObject(j);
                                 String uid = p.getString("user_id");
                                 if (uid.equals(currentUserId)) {
+                                    // Tìm thấy mình trong danh sách
                                     if (!p.isNull("deleted_at")) {
-                                        userDeleted = true; // User đã xóa cuộc hội thoại này
-                                        break;
+                                        // Nếu cột deleted_at có dữ liệu -> Đã xóa/rời -> BỎ QUA
+                                        shouldSkip = true;
+                                    } else {
+                                        // Nếu deleted_at là null -> Vẫn còn là thành viên -> OK
+                                        amIMember = true;
                                     }
+                                    break; // Tìm thấy mình rồi thì thoát vòng lặp con
                                 }
                             }
+
+                            // Nếu duyệt hết danh sách mà không thấy mình (amIMember = false) -> Nghĩa là đã bị kick/rời hẳn -> BỎ QUA
+                            if (!amIMember) {
+                                shouldSkip = true;
+                            }
                         }
+                        // Nếu bị đánh dấu skip thì bỏ qua vòng lặp này
+                        if (shouldSkip) continue;
 
-                        if (userDeleted) continue; // Bỏ qua conversation này
-
+                        // B. Thông tin cơ bản
                         String id = obj.getString("conversation_id");
                         String type = obj.optString("type", "direct");
                         String displayName = "Không tên";
@@ -423,8 +623,7 @@ public class ChatsFragment extends Fragment {
                         } else if (participants != null) {
                             for (int j = 0; j < participants.length(); j++) {
                                 JSONObject p = participants.getJSONObject(j);
-                                String uid = p.getString("user_id");
-                                if (!uid.equals(currentUserId)) {
+                                if (!p.getString("user_id").equals(currentUserId)) {
                                     JSONObject u = p.optJSONObject("users");
                                     if (u != null) {
                                         displayName = u.optString("full_name", "Người dùng");
@@ -440,12 +639,13 @@ public class ChatsFragment extends Fragment {
                             continue;
                         }
 
-                        // Lấy last message
+                        // C. Tin nhắn cuối
                         String lastMsg = "Bắt đầu trò chuyện";
                         String time = "";
                         boolean isRead = true;
                         boolean lastMessageMine = false;
                         long timestamp = 0;
+                        String senderName = "";
 
                         if (obj.has("messages")) {
                             JSONArray messages = obj.getJSONArray("messages");
@@ -456,28 +656,57 @@ public class ChatsFragment extends Fragment {
                                 time = formatTime(last.optString("created_at", ""));
                                 lastMessageMine = last.optString("sender_id", "").equals(currentUserId);
                                 if (!lastMessageMine) isRead = false;
+
+                                JSONObject senderObj = last.optJSONObject("sender");
+                                if (senderObj != null) {
+                                    senderName = senderObj.optString("full_name", "");
+                                }
+                            }
+                        }
+
+                        // --- CHECK GHIM ---
+                        boolean isPinned = false;
+                        JSONArray pinnedArray = obj.optJSONArray("pinned_conversations");
+                        if (pinnedArray != null) {
+                            for (int p = 0; p < pinnedArray.length(); p++) {
+                                JSONObject pinObj = pinnedArray.getJSONObject(p);
+                                // Kiểm tra xem User ID trong bảng ghim có phải mình không
+                                if (currentUserId.equals(pinObj.optString("user_id"))) {
+                                    isPinned = true;
+                                    break;
+                                }
                             }
                         }
 
                         ChatItem chatItem = new ChatItem(id, displayName, displayAvatar, lastMsg, time, lastMessageMine, isRead);
                         chatItem.setLastMessageTimestamp(timestamp);
+                        chatItem.setGroup("group".equals(type));
+                        chatItem.setLastSenderName(senderName);
+
+                        // Set trạng thái ghim
+                        chatItem.setPinned(isPinned);
+
                         result.add(chatItem);
                     }
-
                 } else {
-                    BufferedReader errorReader = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
-                    StringBuilder errorSb = new StringBuilder();
-                    while ((line = errorReader.readLine()) != null) errorSb.append(line);
-                    errorReader.close();
-                    Log.e("DEBUG_CHAT", "LỖI API: " + errorSb.toString());
+                    Log.e("DEBUG_CHAT", "LỖI API (" + responseCode + "): " + responseText);
                 }
 
             } catch (Exception e) {
                 e.printStackTrace();
-                Log.e("DEBUG_CHAT", "Exception Java: " + e.getMessage());
+                Log.e("DEBUG_CHAT", "Exception: " + e.toString());
             }
 
-            Collections.sort(result, (a, b) -> Long.compare(b.getLastMessageTimestamp(), a.getLastMessageTimestamp()));
+            // --- SẮP XẾP: Ưu tiên Ghim -> sau đó đến Thời gian ---
+            Collections.sort(result, (a, b) -> {
+                // 1. So sánh trạng thái Ghim trước
+                if (a.isPinned() != b.isPinned()) {
+                    // Nếu a ghim (true), b không ghim (false) -> a lên trước (-1)
+                    return a.isPinned() ? -1 : 1;
+                }
+                // 2. Nếu cùng trạng thái ghim thì so sánh thời gian (Mới nhất lên đầu)
+                return Long.compare(b.getLastMessageTimestamp(), a.getLastMessageTimestamp());
+            });
 
             handler.post(() -> {
                 chatList.clear();
@@ -622,6 +851,27 @@ public class ChatsFragment extends Fragment {
         } catch (Exception e) {
             Log.e("TIME_ERROR", "Lỗi parse thời gian: " + iso + " | " + e.getMessage());
             return 0;
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        Log.d("ChatsFragment", "onResume: Đang làm mới dữ liệu...");
+
+        // Kiểm tra xem người dùng có đang tìm kiếm dở không?
+        String currentSearchText = "";
+        if (etSearch != null && etSearch.getText() != null) {
+            currentSearchText = etSearch.getText().toString().trim();
+        }
+
+        if (currentSearchText.isEmpty()) {
+            // Nếu không tìm kiếm -> Load danh sách đầy đủ
+            loadConversations(null);
+        } else {
+            // Nếu đang tìm kiếm -> Load theo từ khóa đó
+            loadConversations(currentSearchText);
         }
     }
 

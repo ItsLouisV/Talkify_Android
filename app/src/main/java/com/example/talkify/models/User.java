@@ -5,83 +5,68 @@ import com.google.gson.annotations.SerializedName;
 public class User {
 
     @SerializedName("user_id")
-    private String userId;
+    private String userId;      // user_id (UUID)
 
     @SerializedName("email")
-    private String email;
+    private String email;        // email
 
     @SerializedName("full_name")
-    private String fullName;
+    private String fullName;     // full_name
 
     @SerializedName("user_name")
-    private String userName;
+    private String userName;     // user_name
 
     @SerializedName("avatar_url")
-    private String avatarUrl;
+    private String avatarUrl;    // avatar_url
 
     @SerializedName("bio")
-    private String bio;
+    private String bio;          // bio (nullable)
 
-    // --- Getters ---
 
-    public String getUserId() {
-        return userId;
-    }
+    @SerializedName("last_seen")
+    private String lastSeen;     // timestamp
 
-    public String getEmail() {
-        return email;
-    }
+    @SerializedName("created_at")
+    private String createdAt;    // timestamp
 
-    public String getFullName() {
-        return fullName;
-    }
+    @SerializedName("dob")
+    private String dob;          // date of birth
 
-    public String getUserName() {
-        return userName;
-    }
+    @SerializedName("gender")
+    private String gender;       // gender
 
-    public String getAvatarUrl() {
-        return avatarUrl;
-    }
 
-    public String getBio() {
-        return bio;
-    }
-
-    // --- Setters ---
-
-    public void setUserId(String userId) {
-        this.userId = userId;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public void setFullName(String fullName) {
-        this.fullName = fullName;
-    }
-
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
-
-    public void setAvatarUrl(String avatarUrl) {
-        this.avatarUrl = avatarUrl;
-    }
-
-    public void setBio(String bio) {
-        this.bio = bio;
-    }
+    // --- Trường dùng cho mục đích quan hệ (từ model User ban đầu) ---
 
     @SerializedName("request_status")
-    private String requestStatus; // Sẽ nhận giá trị "new" hoặc "sent"
+    private String requestStatus; // Sẽ nhận giá trị "new", "sent", v.v.
 
-    public String getRequestStatus() {
-        return requestStatus;
-    }
 
-    public void setRequestStatus(String requestStatus) {
-        this.requestStatus = requestStatus;
-    }
+    // --- Getters và Setters ---
+
+    // Getters
+    public String getUserId() { return userId; }
+    public String getEmail() { return email; }
+    public String getFullName() { return fullName; }
+    public String getUserName() { return userName; }
+    public String getAvatarUrl() { return avatarUrl; }
+    public String getBio() { return bio; }
+    public String getLastSeen() { return lastSeen; }
+    public String getCreatedAt() { return createdAt; }
+    public String getDob() { return dob; }
+    public String getGender() { return gender; }
+    public String getRequestStatus() { return requestStatus; }
+
+    // Setters
+    public void setUserId(String userId) { this.userId = userId; }
+    public void setEmail(String email) { this.email = email; }
+    public void setFullName(String fullName) { this.fullName = fullName; }
+    public void setUserName(String userName) { this.userName = userName; }
+    public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
+    public void setBio(String bio) { this.bio = bio; }
+    public void setLastSeen(String lastSeen) { this.lastSeen = lastSeen; }
+    public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
+    public void setDob(String dob) { this.dob = dob; }
+    public void setGender(String gender) { this.gender = gender; }
+    public void setRequestStatus(String requestStatus) { this.requestStatus = requestStatus; }
 }

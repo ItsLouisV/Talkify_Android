@@ -51,7 +51,6 @@
                 android:text="Bấm để xem thông tin"
                 android:textColor="@android:color/darker_gray"
                 android:textSize="12sp"
-                android:visibility="gone"
                 tools:visibility="visible"/>
 
         </LinearLayout>
@@ -75,7 +74,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"/>
 
         <ImageView
-            android:id="@+id/ivVideo"
+            android:id="@+id/ivMenu"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:src="@drawable/ic_more"

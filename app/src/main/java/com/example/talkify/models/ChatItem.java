@@ -9,6 +9,12 @@ public class ChatItem {
     private boolean lastMessageMine;
     private boolean isRead;
 
+    private boolean isGroup;
+
+    private boolean isPinned;
+
+    private String lastSenderName;
+
     public ChatItem(String conversationId, String name, String avatarUrl,
                     String lastMessage, String lastMessageTime,
                     boolean lastMessageMine, boolean isRead) {
@@ -19,7 +25,20 @@ public class ChatItem {
         this.lastMessageTime = lastMessageTime;
         this.lastMessageMine = lastMessageMine;
         this.isRead = isRead;
+
+        this.isGroup = false;
     }
+
+    public boolean isGroup() {
+        return isGroup;
+    }
+
+    public void setGroup(boolean group) {
+        isGroup = group;
+    }
+
+    public String getLastSenderName() { return lastSenderName; }
+    public void setLastSenderName(String lastSenderName) { this.lastSenderName = lastSenderName; }
 
     public String getConversationId() {
         return conversationId;
@@ -51,6 +70,15 @@ public class ChatItem {
 
     public void setRead(boolean read) {
         isRead = read;
+    }
+
+    // GETTER VÀ SETTER CHO isPinned
+    public boolean isPinned() {
+        return isPinned;
+    }
+
+    public void setPinned(boolean pinned) {
+        isPinned = pinned;
     }
 
     // Setters (needed by ChatsFragment realtime updater)

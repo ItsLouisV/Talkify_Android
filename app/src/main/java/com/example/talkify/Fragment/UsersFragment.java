@@ -107,7 +107,7 @@ public class UsersFragment extends Fragment
         // Lấy context an toàn
         if (getContext() == null) return;
 
-        apiService = RetrofitClient.getApiService(); // <-- Dùng import của bạn
+        apiService = RetrofitClient.getApiService();
         sharedPrefManager = SharedPrefManager.getInstance(getContext());
 
         // Lấy thông tin user thật, không còn hardcode

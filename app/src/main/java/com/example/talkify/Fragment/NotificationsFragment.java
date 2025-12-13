@@ -18,6 +18,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.talkify.R;
 import com.example.talkify.adapters.NotificationAdapter;
 import com.example.talkify.models.AppNotification;
+import com.example.talkify.ui.ChatDetailActivity;
 import com.example.talkify.ui.ProfileActivity;
 import com.example.talkify.ui.SeeAllRequestActivity;
 import com.example.talkify.utils.RetrofitClient;
@@ -137,22 +138,38 @@ public class NotificationsFragment extends Fragment {
      * Xử lý khi người dùng bấm vào một dòng thông báo
      */
     private void onNotificationClick(AppNotification notif) {
-        // 1. Đánh dấu là đã đọc (nếu nó đang chưa đọc)
+        // 1. Đánh dấu là đã đọc
         if (!notif.isRead()) {
             markAsRead(notif.getNotificationId());
         }
 
         // 2. Điều hướng dựa trên loại thông báo
         Intent intent = null;
+        String type = notif.getType();
 
-        if ("friend_request".equals(notif.getType())) {
-            // Nếu là lời mời -> Mở màn hình Xem tất cả lời mời
+        if ("friend_request".equals(type)) {
+            // --- Lời mời kết bạn ---
             intent = new Intent(getContext(), SeeAllRequestActivity.class);
 
-        } else if ("friend_accepted".equals(notif.getType())) {
-            // Nếu được chấp nhận -> Mở trang cá nhân người đó
+        } else if ("friend_accepted".equals(type)) {
+            // --- Được chấp nhận kết bạn ---
             intent = new Intent(getContext(), ProfileActivity.class);
             intent.putExtra("USER_ID", notif.getActorId());
+
+        } else if ("group_invite".equals(type)) {
+            // --- [MỚI] ĐƯỢC MỜI VÀO NHÓM ---
+
+            // Lấy ID nhóm từ conversation_id
+            String conversationId = notif.getConversationId();
+
+            if (conversationId != null && !conversationId.isEmpty()) {
+                intent = new Intent(getContext(), ChatDetailActivity.class);
+                intent.putExtra("CONVERSATION_ID", conversationId);
+                // Tên nhóm sẽ được ChatDetailActivity tự load lại từ API cho chính xác
+                intent.putExtra("CONVERSATION_NAME", "Đang tải...");
+            } else {
+                Toast.makeText(getContext(), "Không tìm thấy nhóm này", Toast.LENGTH_SHORT).show();
+            }
         }
 
         if (intent != null) {

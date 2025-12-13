@@ -54,7 +54,7 @@ public class ChatDetailActivity extends AppCompatActivity {
 
     // --- Views ---
     private ViewFlipper toolbarFlipper, inputViewFlipper;
-    private ImageView ivBack, ivSearch, ivCall, ivVideo, ivCloseSearch, ivSearchUp, ivSearchDown;
+    private ImageView ivBack, ivSearch, ivCall, ivMenu, ivCloseSearch, ivSearchUp, ivSearchDown;
     private ImageView ivShowAttachments, btnSend, ivHideAttachments, ivLink, ivCamera, ivGallery;
     private LinearLayout layoutInfo;
     private TextView tvName, tvInfo, tvSearchCount;
@@ -94,6 +94,8 @@ public class ChatDetailActivity extends AppCompatActivity {
         // 1. Nhận dữ liệu từ màn hình trước
         conversationId = getIntent().getStringExtra("CONVERSATION_ID");
         conversationName = getIntent().getStringExtra("CONVERSATION_NAME");
+
+        isGroupChat = getIntent().getBooleanExtra("IS_GROUP", false);
 
         if (conversationId == null) {
             Toast.makeText(this, "Lỗi ID cuộc trò chuyện", Toast.LENGTH_SHORT).show();
@@ -142,7 +144,7 @@ public class ChatDetailActivity extends AppCompatActivity {
         tvInfo = findViewById(R.id.tvInfo);
         ivSearch = findViewById(R.id.ivSearch);
         ivCall = findViewById(R.id.ivCall);
-        ivVideo = findViewById(R.id.ivVideo);
+        ivMenu = findViewById(R.id.ivMenu);
         ivCloseSearch = findViewById(R.id.ivCloseSearch);
         etSearch = findViewById(R.id.etSearch);
         tvSearchCount = findViewById(R.id.tvSearchCount);
@@ -230,10 +232,18 @@ public class ChatDetailActivity extends AppCompatActivity {
             checkPermissions();
         });
 
-        layoutInfo.setOnClickListener(v -> {
-            // TODO: Mở cài đặt
-            Toast.makeText(this, "Cài đặt hội thoại", Toast.LENGTH_SHORT).show();
-        });
+        // Tạo một sự kiện chung để mở màn hình Cài đặt
+        View.OnClickListener openSettingsAction = v -> {
+            Intent intent = new Intent(ChatDetailActivity.this, ConvSettingActivity.class);
+            intent.putExtra("CONVERSATION_ID", conversationId); // Truyền ID để màn hình kia biết load dữ liệu nào
+            intent.putExtra("IS_GROUP", isGroupChat);           // Truyền loại nhóm để hiển thị giao diện phù hợp
+            startActivity(intent);
+        };
+
+        // Gán sự kiện cho cả layoutInfo và ivMenu
+        layoutInfo.setOnClickListener(openSettingsAction);
+        ivMenu.setOnClickListener(openSettingsAction);
+        // ---------------------
     }
 
     // ================= LOGIC XỬ LÝ MEDIA (CAMERA/GALLERY) =================
@@ -285,7 +295,7 @@ public class ChatDetailActivity extends AppCompatActivity {
      */
     private void loadAllChatData() {
         // Query chuẩn cho cấu trúc bảng mới
-        String query = "select=conversation_id,type," +
+        String query = "conversation_id,type," +
                 "group_details(name,avatar_url)," +
                 "conversation_participants(user_id,users(full_name,avatar_url))";
 
@@ -305,6 +315,9 @@ public class ChatDetailActivity extends AppCompatActivity {
                     // Cập nhật biến toàn cục
                     isGroupChat = c.isGroup();
 
+                    // --- THÊM LOG ĐỂ KIỂM TRA ---
+                    Log.d("ChatDebug", "Đây là nhóm? " + isGroupChat);
+
                     // 1. Cập nhật Tên & Avatar (Dùng hàm thông minh trong Model)
                     // Hàm này sẽ tự xử lý: Nếu là Group lấy tên nhóm, nếu 1-1 lấy tên người kia
                     String smartName = c.getDisplayName(currentUserId);
@@ -313,13 +326,8 @@ public class ChatDetailActivity extends AppCompatActivity {
                     // 2. Cập nhật UI nút gọi
                     if (isGroupChat) {
                         ivCall.setVisibility(View.GONE);
-                        ivVideo.setVisibility(View.GONE);
-                        tvInfo.setText("Bấm để xem thành viên");
-                        tvInfo.setVisibility(View.VISIBLE);
                     } else {
                         ivCall.setVisibility(View.VISIBLE);
-                        ivVideo.setVisibility(View.VISIBLE);
-                        tvInfo.setVisibility(View.GONE);
                     }
 
                     // 3. Cập nhật trạng thái cho Adapter tin nhắn (để hiển thị avatar nhỏ hay không)

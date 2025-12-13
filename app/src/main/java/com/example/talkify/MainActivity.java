@@ -1,6 +1,7 @@
 package com.example.talkify;
 
 import android.Manifest;
+import android.app.AlertDialog;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -63,9 +64,9 @@ public class MainActivity extends AppCompatActivity {
         apiService = RetrofitClient.getApiService();
         prefManager = SharedPrefManager.getInstance(this);
 
-        // 2. Setup Bottom Navigation (Giữ nguyên code cũ của bạn)
+        // 2. Setup Bottom Navigation
         bottomNavigation = findViewById(R.id.bottomNavigation);
-        loadFragment(new ChatsFragment()); // Mặc định
+
 
         bottomNavigation.setOnItemSelectedListener(item -> {
             Fragment selected = null;
@@ -86,8 +87,113 @@ public class MainActivity extends AppCompatActivity {
             return true;
         });
 
+        // Nếu token chết, app sẽ tự refresh tại đây
+        checkUserSession();
+
         // 3. Cài đặt hệ thống Thông báo
         setupNotificationSystem();
+    }
+
+    /**
+     * Kiểm tra và làm mới Token khi mở App
+     * Tránh lỗi màn hình trắng khi để qua đêm
+     */
+    private void checkUserSession() {
+        String refreshToken = prefManager.getRefreshToken();
+
+        if (refreshToken == null) {
+            // Không có refresh token -> Bắt buộc đăng nhập lại
+            showSessionExpiredDialog();
+            return;
+        }
+
+        // 1. Tạo đường dẫn tuyệt đối (Full URL) để tránh bị nối vào /rest/v1
+        String fullUrl = SupabaseClient.URL + "/auth/v1/token?grant_type=refresh_token";
+
+        // Gọi API Refresh Token
+        Map<String, String> body = new HashMap<>();
+        body.put("refresh_token", refreshToken);
+
+        apiService.refreshToken(fullUrl, SupabaseClient.ANON_KEY, body).enqueue(new Callback<Object>() {
+            @Override
+            public void onResponse(@NonNull Call<Object> call, @NonNull Response<Object> response) {
+                if (response.isSuccessful()) {
+                    try {
+                        // 1. Parse JSON thủ công
+                        String json = new com.google.gson.Gson().toJson(response.body());
+                        com.google.gson.JsonObject obj = new com.google.gson.Gson().fromJson(json, com.google.gson.JsonObject.class);
+
+                        String newAccessToken = obj.get("access_token").getAsString();
+                        String newRefreshToken = obj.get("refresh_token").getAsString();
+
+                        // 2. Cập nhật lại vào SharedPref
+                        prefManager.saveToken(newAccessToken);
+                        prefManager.saveRefreshToken(newRefreshToken);
+
+                        // 3. [QUAN TRỌNG] Token đã sống lại -> LOAD GIAO DIỆN NGAY
+                        setupUI();
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        // Parse lỗi -> Coi như phiên hết hạn -> Hiện Dialog
+                        showSessionExpiredDialog();
+                    }
+                } else {
+                    // Token hết hạn quá lâu (> 60 ngày) hoặc bị thu hồi -> Hiện Dialog bắt đăng nhập lại
+                    showSessionExpiredDialog();
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<Object> call, @NonNull Throwable t) {
+                // Mất mạng -> Vẫn cho vào app để xem cache (chế độ Offline)
+                Toast.makeText(MainActivity.this, "Không có kết nối mạng", Toast.LENGTH_SHORT).show();
+                setupUI();
+            }
+        });
+    }
+
+    /**
+     * Hiển thị Dialog bắt buộc đăng nhập lại
+     * Không cho phép hủy (setCancelable = false)
+     */
+    private void showSessionExpiredDialog() {
+        if (isFinishing()) return; // Kiểm tra để tránh lỗi crash
+
+        new AlertDialog.Builder(this)
+                .setTitle("Thông báo")
+                .setMessage("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.")
+                .setCancelable(false) // QUAN TRỌNG: Không cho bấm ra ngoài hoặc nút Back
+                .setPositiveButton("OK", (dialog, which) -> {
+                    // Khi bấm OK thì mới thực hiện Logout
+                    performLogout();
+                })
+                .show();
+    }
+
+    /**
+     * Hàm thực hiện xóa dữ liệu và chuyển về màn hình Login
+     */
+    private void performLogout() {
+        // Xóa sạch dữ liệu trong máy
+        prefManager.clearUserSession();
+
+        // Chuyển về màn hình Login
+        Intent intent = new Intent(this, com.example.talkify.auth.LoginActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK); // Xóa Stack để không Back lại được
+        startActivity(intent);
+        finish();
+    }
+
+    /**
+     * Hàm này được gọi khi Token đã được xác thực (hoặc refresh) thành công.
+     * Lúc này mới bắt đầu load giao diện để tránh lỗi 401.
+     */
+    private void setupUI() {
+        // Kiểm tra nếu Fragment chưa được add thì mới add (để tránh reload khi xoay màn hình)
+        if (getSupportFragmentManager().findFragmentById(R.id.fragmentContainer) == null) {
+            loadFragment(new ChatsFragment()); // Mặc định vào màn hình chat
+        }
     }
 
     private void loadFragment(Fragment fragment) {

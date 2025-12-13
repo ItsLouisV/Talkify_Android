@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#000000"
+    tools:context=".ui.AccountPrivacyActivity">
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:background="#000000">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:id="@+id/ivBack"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_back"
+                app:tint="#4D96FF" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="Tài khoản &amp; Quyền riêng tư"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </androidx.appcompat.widget.Toolbar>
+
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:padding="15dp"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="90dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Quyền riêng tư tài khoản"
+                android:textSize="16dp"
+                android:textStyle="bold"
+                android:textColor="@color/lightGray"
+                android:layout_marginBottom="10dp" />
+
+            <!-- SECTION: Quyền riêng tư tài khoản -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/bg_ios_group">
+
+                <include
+                    android:id="@+id/itemPrivacyProfile"
+                    layout="@layout/item_setting_row"
+                    app:title="Quyền riêng tư hồ sơ" />
+
+                <View android:layout_width="match_parent" android:layout_height="0.5dp" android:background="@color/mediumGray" />
+
+                <include
+                    android:id="@+id/itemLastSeen"
+                    layout="@layout/item_setting_row"
+                    app:title="Trạng thái hoạt động" />
+
+                <View android:layout_width="match_parent" android:layout_height="0.5dp" android:background="@color/mediumGray" />
+
+                <include
+                    android:id="@+id/itemBlockedUsers"
+                    layout="@layout/item_setting_row"
+                    app:title="Tài khoản bị chặn" />
+
+            </LinearLayout>
+
+            <!-- SECTION: Bảo mật tài khoản -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Bảo mật tài khoản"
+                android:textSize="16dp"
+                android:textStyle="bold"
+                android:textColor="@color/lightGray"
+                android:layout_marginBottom="10dp"
+                android:layout_marginTop="20dp"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="0dp"
+                android:background="@drawable/bg_ios_group">
+
+                <include
+                    android:id="@+id/itemAccountInfo"
+                    layout="@layout/item_setting_row"
+                    app:title="Thông tin tài khoản" />
+
+                <View android:layout_width="match_parent" android:layout_height="0.5dp" android:background="@color/mediumGray" />
+
+                <include
+                    android:id="@+id/itemPasswordChange"
+                    layout="@layout/item_setting_row"
+                    app:title="Đổi mật khẩu" />
+
+                <View android:layout_width="match_parent" android:layout_height="0.5dp" android:background="@color/mediumGray" />
+
+                <include
+                    android:id="@+id/itemTwoFactorAuth"
+                    layout="@layout/item_setting_row"
+                    app:title="Xác thực 2 bước" />
+
+            </LinearLayout>
+
+            <!-- SECTION: Dữ liệu & quyền -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Dữ liệu &amp; Quyền"
+                android:textSize="16dp"
+                android:textStyle="bold"
+                android:textColor="@color/lightGray"
+                android:layout_marginBottom="10dp"
+                android:layout_marginTop="20dp"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/bg_ios_group">
+
+                <include
+                    android:id="@+id/itemDownloadData"
+                    layout="@layout/item_setting_row"
+                    app:title="Tải xuống dữ liệu" />
+
+                <View android:layout_width="match_parent" android:layout_height="0.5dp" android:background="@color/mediumGray" />
+
+                <include
+                    android:id="@+id/itemDeleteAccount"
+                    layout="@layout/item_setting_row"
+                    app:title="Xóa tài khoản" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>

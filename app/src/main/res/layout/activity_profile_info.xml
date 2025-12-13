@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000">
+
+    <!-- Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:gravity="center_vertical"
+        android:background="#111">
+
+        <ImageView
+            android:id="@+id/btnBack"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_back"
+            app:tint="#48AFFF" />
+
+        <TextView
+            android:layout_marginStart="12dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Thông tin"
+            android:textColor="#fff"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+
+    <!-- Nội dung chính -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="16dp"
+            android:gravity="center_horizontal">
+
+            <!-- Avatar -->
+            <ImageView
+                android:id="@+id/imgAvatar"
+                android:layout_width="120dp"
+                android:layout_height="120dp"
+                android:src="@drawable/avatar_user_default"
+                android:scaleType="centerCrop"
+                android:background="@drawable/circle_bg"
+                android:clipToOutline="true" />
+
+            <!-- Bio -->
+            <TextView
+                android:id="@+id/tvBio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="Bio hiện ở đây, nếu không có thì hiện chưa cập nhật"
+                android:textColor="#ccc"
+                android:textSize="14sp"
+                android:gravity="center" />
+
+            <!-- Card chứa thông tin -->
+            <LinearLayout
+                android:layout_marginTop="20dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/bg_ios_group"
+                android:padding="10dp">
+
+                <!-- FULLNAME -->
+                <include
+                    layout="@layout/item_row_info"
+                    android:id="@+id/rowFullName"
+                    app:title="Fullname"/>
+
+                <View android:layout_height="1dp" android:layout_width="match_parent" android:background="#1AFFFFFF" />
+
+                <!-- USERNAME -->
+                <include
+                    layout="@layout/item_row_info"
+                    android:id="@+id/rowUsername"
+                    app:title="Username"/>
+
+                <View android:layout_height="1dp" android:layout_width="match_parent" android:background="#1AFFFFFF" />
+
+                <!-- EMAIL -->
+                <include
+                    layout="@layout/item_row_info"
+                    android:id="@+id/rowEmail"
+                    app:title="Email"/>
+
+                <View android:layout_height="1dp" android:layout_width="match_parent" android:background="#1AFFFFFF" />
+
+                <!-- Ngay Sinh -->
+                <include
+                    layout="@layout/item_row_info"
+                    android:id="@+id/rowDob"
+                    app:title="Ngay Sinh"/>
+
+                <View android:layout_height="1dp" android:layout_width="match_parent" android:background="#1AFFFFFF" />
+
+                <!-- Gioi Tinh -->
+                <include
+                    layout="@layout/item_row_info"
+                    android:id="@+id/rowGender"
+                    app:title="Gioi Tinh"/>
+
+                <View android:layout_height="1dp" android:layout_width="match_parent" android:background="#1AFFFFFF" />
+
+                <!-- Create At -->
+                <include
+                    layout="@layout/item_row_info"
+                    android:id="@+id/rowCreatedAt"
+                    app:title="Ngay Tao Tai Khoan"/>
+
+            </LinearLayout>
+
+            <!-- Button Edit -->
+            <LinearLayout
+                android:id="@+id/btnEdit"
+                android:layout_marginTop="20dp"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:background="@drawable/btn_bg_blue"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:clickable="true"
+                android:focusable="true">
+
+                <ImageView
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:src="@drawable/ic_edit_profile"
+                    app:tint="#ffffff" />
+
+                <TextView
+                    android:layout_marginStart="6dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Chỉnh sửa"
+                    android:textColor="#ffffff"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>

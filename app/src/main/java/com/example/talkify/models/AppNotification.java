@@ -29,6 +29,16 @@ public class AppNotification {
     @SerializedName("actor")
     private User actor;
 
+    // THÊM TRƯỜNG NÀY
+    @SerializedName("conversation_id")
+    private String conversationId;
+
+    // Getter
+    public String getConversationId() {
+        return conversationId;
+    }
+
+
     // --- Getters ---
 
     public String getNotificationId() { return notificationId; }

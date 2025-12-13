@@ -20,6 +20,7 @@ import com.bumptech.glide.Glide;
 import com.example.talkify.R;
 import com.example.talkify.auth.LoginActivity;
 import com.example.talkify.services.SharedPrefManager;
+import com.example.talkify.ui.AccountPrivacyActivity;
 import com.google.android.material.imageview.ShapeableImageView;
 
 public class SettingsFragment extends Fragment {
@@ -69,7 +70,6 @@ public class SettingsFragment extends Fragment {
         itemDataSync = rootView.findViewById(R.id.itemDataSync);
 
         // GỌI HÀM HELPER: Gán Icon và Text cho các <include>
-        // (Thay R.drawable... bằng tên icon chính xác của bạn)
         setSettingOption(itemAccountPrivacy, R.drawable.ic_user, getString(R.string.settings_account_privacy));
         setSettingOption(itemNotifications, R.drawable.ic_bell, getString(R.string.settings_notifications));
         setSettingOption(itemMessagesMedia, R.drawable.ic_chat, getString(R.string.settings_messages_media));
@@ -118,10 +118,14 @@ public class SettingsFragment extends Fragment {
             // TODO: Intent to ProfileActivity
         });
 
+        itemAccountPrivacy.setOnClickListener(v -> {
+            Intent intent = new Intent(getContext(), AccountPrivacyActivity.class);
+            startActivity(intent);
+        });
+
         // (Các listener khác)
-        itemAccountPrivacy.setOnClickListener(v -> Toast.makeText(getContext(), getString(R.string.settings_account_privacy), Toast.LENGTH_SHORT).show());
         itemNotifications.setOnClickListener(v -> Toast.makeText(getContext(), getString(R.string.settings_notifications), Toast.LENGTH_SHORT).show());
-        // ... (thêm các listener khác) ...
+
 
         btnLogout.setOnClickListener(v -> showLogoutConfirmationDialog());
     }

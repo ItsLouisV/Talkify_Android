@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/action_search_friend"
+        android:title="Đoạn chat mới"
+        android:icon="@drawable/ic_chat_plus" />
+
+    <item
+        android:id="@+id/action_create_group"
+        android:title="Tạo nhóm"
+        android:icon="@drawable/ic_group_add" />
+</menu>

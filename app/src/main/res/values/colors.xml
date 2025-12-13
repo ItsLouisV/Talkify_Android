@@ -11,4 +11,12 @@
     <color name="mediumGray">#474747</color>
     <color name="lightBlue">#1E4C63</color>
     <color name="mediumBlue">#285FF4</color>
+
+
+    <color name="sheet_header_bg">#252525</color>
+    <color name="sheet_body_bg">#081414</color>
+
+    <color name="text_blue_action">#4285F4</color>
+    <color name="search_input_bg">#3E4242</color>
+    <color name="handle_bar_color">#606060</color>
 </resources>

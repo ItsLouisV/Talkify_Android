@@ -1,6 +1,7 @@
 package com.example.talkify.adapters;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -57,26 +58,48 @@ public class ConversationAdapter extends RecyclerView.Adapter<ConversationAdapte
                 .error(R.drawable.ic_user)
                 .into(holder.imgAvatar);
 
-        // Tin nhắn cuối (thêm tiền tố “Bạn:” nếu là của mình)
-        String prefix = item.isLastMessageMine() ? "Bạn: " : "";
-        holder.tvLastMessage.setText(prefix + (item.getLastMessage() != null ? item.getLastMessage() : ""));
+        // --- XỬ LÝ TIỀN TỐ TIN NHẮN CUỐI ---
+        String content = item.getLastMessage() != null ? item.getLastMessage() : "";
+        String prefix = "";
 
-        // Thời gian hiển thị (định dạng lại cho dễ đọc)
-        holder.tvTime.setText(formatTime(item.getLastMessageTime()));
+        if (item.isLastMessageMine()) {
+            // 1. Nếu là tin nhắn của mình
+            prefix = "Bạn: ";
+        } else if (item.isGroup()) {
+            // 2. Nếu là nhóm VÀ tin nhắn của người khác -> Hiển thị tên người đó
+            String senderName = item.getLastSenderName();
+            if (senderName != null && !senderName.isEmpty()) {
+                prefix = senderName + ": ";
+            }
+        }
 
-//        // Trạng thái đọc
-//        if (item.isRead()) {
-//            holder.imgStatus.setImageResource(R.drawable.ic_double_check);
-//            holder.imgStatus.setVisibility(View.VISIBLE);
-//        } else if (item.isLastMessageMine()) {
-//            holder.imgStatus.setImageResource(R.drawable.ic_single_check);
-//            holder.imgStatus.setVisibility(View.VISIBLE);
-//        } else {
-//            holder.imgStatus.setVisibility(View.GONE);
-//        }
+        // 3. Nếu là chat 1-1 và người khác nhắn -> Không hiện prefix (prefix = "")
+
+        holder.tvLastMessage.setText(prefix + content);
+
+        // Thời gian hiển thị
+        holder.tvTime.setText(item.getLastMessageTime());
+
+        // ==== TRẠNG THÁI ĐỌC ====
+        if (item.isLastMessageMine() && !item.isRead()) {
+            holder.imgStatus.setVisibility(View.VISIBLE);
+            holder.imgStatus.setImageResource(R.drawable.ic_dot);
+        } else {
+            holder.imgStatus.setVisibility(View.GONE);
+        }
+
 
         // Click mở chi tiết hội thoại
         holder.itemView.setOnClickListener(v -> listener.onChatClick(item));
+
+        // Xử lý hiển thị icon Ghim
+        if (item.isPinned()) {
+            holder.ivPin.setVisibility(View.VISIBLE);
+            holder.itemView.setBackgroundColor(Color.parseColor("#1A1A1D")); // Đổi màu nền nhẹ để nổi bật
+        } else {
+            holder.ivPin.setVisibility(View.GONE);
+            holder.itemView.setBackgroundColor(Color.BLACK); // Màu mặc định
+        }
     }
 
     @Override
@@ -85,7 +108,7 @@ public class ConversationAdapter extends RecyclerView.Adapter<ConversationAdapte
     }
 
     static class ChatViewHolder extends RecyclerView.ViewHolder {
-        ImageView imgAvatar, imgStatus;
+        ImageView imgAvatar, imgStatus, ivPin;
         TextView tvName, tvLastMessage, tvTime;
 
         ChatViewHolder(@NonNull View itemView) {
@@ -95,22 +118,8 @@ public class ConversationAdapter extends RecyclerView.Adapter<ConversationAdapte
             tvLastMessage = itemView.findViewById(R.id.tvLastMessage);
             tvTime = itemView.findViewById(R.id.tvTime);
             imgStatus = itemView.findViewById(R.id.imgStatus);
+            ivPin = itemView.findViewById(R.id.ivPin);
         }
     }
 
-    /**
-     * Chuyển chuỗi ISO time thành dạng giờ:phút hoặc ngày/tháng
-     */
-    private String formatTime(String isoTime) {
-        if (isoTime == null || isoTime.isEmpty()) return "";
-
-        try {
-            SimpleDateFormat isoFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault());
-            Date date = isoFormat.parse(isoTime);
-            SimpleDateFormat outFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
-            return outFormat.format(date);
-        } catch (ParseException e) {
-            return "";
-        }
-    }
 }

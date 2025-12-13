@@ -17,7 +17,6 @@ public class Conversation {
     @SerializedName("conversation_participants")
     private List<ParticipantWrapper> participants;
 
-    // --- QUAN TRỌNG: THÊM PHẦN NÀY ---
     // Để hứng dữ liệu từ query: messages:messages(...)
     @SerializedName("messages")
     private List<Message> messages;
@@ -106,21 +105,33 @@ public class Conversation {
         @SerializedName("user_id")
         private String userId;
 
+        @SerializedName("role")
+        private String role;
+
         @SerializedName("users")
         private User user;
 
         public String getUserId() { return userId; }
+
+        // --- Getter cho Role ---
+        public String getRole() { return role; }
+
         public User getUser() { return user; }
+
     }
 
     public static class User {
         @SerializedName("full_name")
         private String fullName;
 
+        @SerializedName("username")
+        private String username;
+
         @SerializedName("avatar_url")
         private String avatarUrl;
 
         public String getFullName() { return fullName; }
         public String getAvatarUrl() { return avatarUrl; }
+        public String getUsername() { return username; }
     }
 }

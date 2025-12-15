@@ -14,6 +14,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import java.io.IOException;
+import java.util.Locale;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -49,6 +50,10 @@ public class RegisterActivity extends AppCompatActivity {
         btnRegister.setOnClickListener(v -> handleSignup());
     }
 
+    // Định nghĩa Biểu thức chính quy cho mật khẩu mạnh
+    private static final String PASSWORD_REGEX =
+            "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=!])(?=\\S+$).{8,}$";
+
     private void handleSignup() {
         String fullName = getText(etFullName);
         String email = getText(etEmail);
@@ -56,22 +61,26 @@ public class RegisterActivity extends AppCompatActivity {
         String confirm = getText(etConfirmPassword);
 
         if (fullName.isEmpty() || email.isEmpty() || password.isEmpty() || confirm.isEmpty()) {
-            showToast("Please fill all fields");
+            showToast("Vui lòng điền đầy đủ các trường.");
             return;
         }
         if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            showToast("Invalid email format");
+            showToast("Định dạng email không hợp lệ.");
             return;
         }
         if (!password.equals(confirm)) {
-            showToast("Passwords do not match");
-            return;
-        }
-        if (password.length() < 6) {
-            showToast("Password must be at least 6 characters");
+            showToast("Mật khẩu không khớp.");
             return;
         }
 
+        // --- PHẦN KIỂM TRA MẬT KHẨU MỚI ---
+        if (!password.matches(PASSWORD_REGEX)) {
+            showToast("Vui lòng tuân theo quy định đặt mật khẩu của Talkify");
+            return;
+        }
+        // ----------------------------------
+
+        // Nếu tất cả kiểm tra đều qua
         RegisterRequest req = new RegisterRequest(email, password, fullName);
         signupSupabase(req);
     }
@@ -108,19 +117,45 @@ public class RegisterActivity extends AppCompatActivity {
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
-                String resStr = response.body().string();
+                // Đọc body response một lần và lưu vào biến final
+                // Sử dụng final để có thể truy cập trong inner class runOnUiThread
+                final String resStr = response.body().string();
 
                 runOnUiThread(() -> {
                     if (response.isSuccessful()) {
-                        // ---- PHẦN SỬA ĐỔI ----
-                        // Không cần làm gì thêm! Trigger đã tự chạy.
                         showToast("Account created! Please Login.");
                         startActivity(new Intent(RegisterActivity.this, LoginActivity.class));
                         finish();
-                        // ---------------------
-
                     } else {
-                        showToast("Signup failed: " + resStr);
+                        // --- PHẦN ĐÃ SỬA: PHÂN TÍCH VÀ DỊCH LỖI DỰA TRÊN THỰC TẾ ---
+                        String errorMessage = "Đăng ký thất bại.";
+
+                        try {
+                            // 1. Parse body JSON
+                            JsonObject jsonResponse = JsonParser.parseString(resStr).getAsJsonObject();
+
+                            // 2. Lấy thông báo lỗi từ trường "msg" (Đã xác nhận từ Logcat)
+                            if (jsonResponse.has("msg")) {
+                                errorMessage = jsonResponse.get("msg").getAsString();
+                            } else {
+                                // Fallback nếu cấu trúc JSON lỗi khác (không khuyến nghị)
+                                errorMessage = "Lỗi " + response.code() + ": " + resStr;
+                            }
+
+                            // 3. DỊCH LỖI: Kiểm tra nội dung tiếng Anh và thay thế
+                            String lowerCaseError = errorMessage.toLowerCase(Locale.ROOT);
+
+                            if (lowerCaseError.contains("user already registered")) {
+                                errorMessage = "Email đã được sử dụng. Vui lòng thử email khác.";
+                            }
+
+                        } catch (Exception e) {
+                            // Xử lý khi parse JSON thất bại
+                            errorMessage = "Lỗi phản hồi không xác định: " + response.code();
+                        }
+
+                        showToast(errorMessage);
+                        // ------------------------------------
                     }
                 });
             }

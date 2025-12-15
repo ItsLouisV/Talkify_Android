@@ -32,10 +32,14 @@ import com.example.talkify.R;
 import com.example.talkify.adapters.MessageAdapter;
 import com.example.talkify.models.Conversation;
 import com.example.talkify.models.Message;
+import com.example.talkify.models.User;
 import com.example.talkify.services.SharedPrefManager;
 import com.example.talkify.services.SupabaseApiService;
 import com.example.talkify.services.SupabaseClient;
+import com.example.talkify.services.SupabaseRealtimeClient;
 import com.example.talkify.utils.RetrofitClient;
+
+import org.json.JSONException;
 
 import java.io.File;
 import java.io.IOException;
@@ -65,21 +69,20 @@ public class ChatDetailActivity extends AppCompatActivity {
 
     // --- State ---
     private String conversationId;
-    private String conversationName; // Tên lấy từ Intent
+    private String conversationName;
     private String currentUserId;
     private boolean isGroupChat = false;
-    private Uri cameraImageUri; // Lưu URI ảnh chụp tạm thời
-    private boolean wantsToOpenCamera = false; // Cờ kiểm tra quyền
+    private Uri cameraImageUri;
+    private boolean wantsToOpenCamera = false;
 
     // --- Services ---
     private SupabaseApiService apiService;
     private String authToken, apiKey;
 
-    // --- Polling ---
-    private Handler pollingHandler;
-    private Runnable pollingRunnable;
-    private final int POLLING_INTERVAL = 3000; // 3 giây
-    private int lastMessageCount = 0;
+    private SupabaseRealtimeClient.MessageListener messageInsertListener;
+
+    // Lưu thông tin profile của mình (Dùng cho Optimistic Update)
+    private User currentUserProfile;
 
     // --- Activity Launchers ---
     private ActivityResultLauncher<String[]> permissionLauncher;
@@ -94,7 +97,6 @@ public class ChatDetailActivity extends AppCompatActivity {
         // 1. Nhận dữ liệu từ màn hình trước
         conversationId = getIntent().getStringExtra("CONVERSATION_ID");
         conversationName = getIntent().getStringExtra("CONVERSATION_NAME");
-
         isGroupChat = getIntent().getBooleanExtra("IS_GROUP", false);
 
         if (conversationId == null) {
@@ -107,7 +109,10 @@ public class ChatDetailActivity extends AppCompatActivity {
         initViews();
         initServices();
 
-        // 3. Set tên ngay lập tức (Tránh hiện "Đang tải..." hoặc rỗng)
+        // BẮT ĐẦU KẾT NỐI REALTIME KHI VÀO CHAT
+        SupabaseRealtimeClient.getInstance().connect();
+
+        // 3. Set tên ngay lập tức
         if (conversationName != null) {
             tvName.setText(conversationName);
         } else {
@@ -116,23 +121,33 @@ public class ChatDetailActivity extends AppCompatActivity {
 
         // 4. Cấu hình chức năng
         setupRecyclerView();
-        registerActivityLaunchers(); // Đăng ký Camera/Gallery
+        registerActivityLaunchers();
         setupClickListeners();
 
-        // 5. Tải dữ liệu
-        loadAllChatData(); // Check group/name
-        loadMessages();    // Tải tin nhắn ngay
-
-        // 6. Bắt đầu Polling tin mới
-        initPolling();
+        // 5. Tải dữ liệu và Realtime
+        loadCurrentUserProfile();
+        loadAllChatData();
+        loadMessages();
+        setupRealtimeListener();
     }
 
     private void initServices() {
         apiService = RetrofitClient.getApiService();
-        currentUserId = SharedPrefManager.getInstance(this).getUserId();
-        String userToken = SharedPrefManager.getInstance(this).getToken();
+        SharedPrefManager spm = SharedPrefManager.getInstance(this);
+        currentUserId = spm.getUserId();
+        String userToken = spm.getToken();
         authToken = "Bearer " + userToken;
         apiKey = SupabaseClient.ANON_KEY;
+    }
+
+    // --- TẢI PROFILE CỦA CHÍNH MÌNH (Cho Optimistic Update) ---
+    private void loadCurrentUserProfile() {
+        SharedPrefManager spm = SharedPrefManager.getInstance(this);
+        currentUserProfile = new User();
+        currentUserProfile.setUserId(currentUserId);
+        currentUserProfile.setFullName(spm.getUserFullName());
+        // Có thể thêm dòng lấy avatar_url từ SharedPreferences nếu có
+        currentUserProfile.setAvatarUrl(spm.getUserAvatarUrl());
     }
 
     private void initViews() {
@@ -163,7 +178,7 @@ public class ChatDetailActivity extends AppCompatActivity {
     private void setupRecyclerView() {
         messageAdapter = new MessageAdapter(this, currentUserId);
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
-        layoutManager.setStackFromEnd(true); // Luôn cuộn xuống dưới cùng
+        layoutManager.setStackFromEnd(true);
         recyclerViewMessages.setLayoutManager(layoutManager);
         recyclerViewMessages.setAdapter(messageAdapter);
     }
@@ -235,8 +250,8 @@ public class ChatDetailActivity extends AppCompatActivity {
         // Tạo một sự kiện chung để mở màn hình Cài đặt
         View.OnClickListener openSettingsAction = v -> {
             Intent intent = new Intent(ChatDetailActivity.this, ConvSettingActivity.class);
-            intent.putExtra("CONVERSATION_ID", conversationId); // Truyền ID để màn hình kia biết load dữ liệu nào
-            intent.putExtra("IS_GROUP", isGroupChat);           // Truyền loại nhóm để hiển thị giao diện phù hợp
+            intent.putExtra("CONVERSATION_ID", conversationId);
+            intent.putExtra("IS_GROUP", isGroupChat);
             startActivity(intent);
         };
 
@@ -283,12 +298,103 @@ public class ChatDetailActivity extends AppCompatActivity {
         // Ẩn thanh đính kèm
         inputViewFlipper.setDisplayedChild(0);
 
-        // TODO: Code upload ảnh lên Supabase Storage ở đây
         // Sau khi upload xong, lấy URL và gọi sendMessage(url, "image")
-        Toast.makeText(this, "Đã chọn ảnh! (Chức năng Upload cần cài đặt Storage)", Toast.LENGTH_LONG).show();
+        Toast.makeText(this, "Đang phát triển", Toast.LENGTH_LONG).show();
     }
 
-    // ================= LOGIC API & DATA =================
+    // ================= LOGIC REALTIME VÀ TẢI TIN NHẮN =================
+
+    /**
+     * Đăng ký listener cho tin nhắn INSERT qua WebSocket.
+     */
+    private void setupRealtimeListener() {
+        SupabaseRealtimeClient realtime = SupabaseRealtimeClient.getInstance();
+
+        messageInsertListener = record -> {
+            try {
+                // 0️⃣ Lọc conversation
+                if (!conversationId.equals(record.getString("conversation_id"))) return;
+
+                // 1️⃣ Convert JSON → Message
+                Message serverMessage = Message.fromRealtimeJson(record);
+
+                Log.d("RealtimeDebug",
+                        "INSERT message id=" + serverMessage.getMessageId()
+                                + " temp=" + serverMessage.getClientTempId());
+
+                // 2️⃣ Tin của chính mình → replace optimistic message
+                if (currentUserId.equals(serverMessage.getSenderId())
+                        && serverMessage.getClientTempId() != null) {
+
+                    runOnUiThread(() -> {
+                        messageAdapter.replaceTempMessage(
+                                serverMessage.getClientTempId(),
+                                serverMessage.getMessageId(),
+                                serverMessage.getCreatedAt()
+                        );
+                    });
+                    return;
+                }
+
+                // 3️⃣ Tin người khác → fetch JOIN đầy đủ
+                fetchFullMessageAndDisplay(serverMessage.getMessageId());
+
+            } catch (Exception e) {
+                Log.e("ChatRealtime", "Realtime error", e);
+            }
+        };
+
+        realtime.subscribe("messages", "INSERT", messageInsertListener);
+    }
+
+    /**
+     * Tải lại tin nhắn mới theo ID, bao gồm thông tin JOIN (Sender) bị thiếu trong Realtime Payload.
+     */
+    private void fetchFullMessageAndDisplay(String messageId) {
+        String selectQuery = "*,sender:users!messages_sender_id_fkey(user_id,full_name,avatar_url)";
+
+        apiService.getMessageById(
+                authToken,
+                apiKey,
+                "eq." + messageId,
+                selectQuery
+        ).enqueue(new Callback<List<Message>>() {
+
+            @Override
+            public void onResponse(Call<List<Message>> call, Response<List<Message>> response) {
+                if (!response.isSuccessful()
+                        || response.body() == null
+                        || response.body().isEmpty()) {
+                    return;
+                }
+
+                Message fullMessage = response.body().get(0);
+
+                runOnUiThread(() -> {
+
+                    // 🔒 CHỐT CHẶN DUPLICATE
+                    for (Message m : messageAdapter.getCurrentList()) {
+                        if (m.getMessageId() != null
+                                && m.getMessageId().equals(fullMessage.getMessageId())) {
+                            return; // đã tồn tại
+                        }
+                    }
+
+                    messageAdapter.addMessage(fullMessage);
+                    recyclerViewMessages.scrollToPosition(
+                            messageAdapter.getItemCount() - 1
+                    );
+                });
+            }
+
+            @Override
+            public void onFailure(Call<List<Message>> call, Throwable t) {
+                Log.e("ChatDebug",
+                        "Lỗi tải tin nhắn realtime: " + t.getMessage());
+            }
+        });
+    }
+
 
     /**
      * Tải thông tin cuộc trò chuyện
@@ -315,11 +421,7 @@ public class ChatDetailActivity extends AppCompatActivity {
                     // Cập nhật biến toàn cục
                     isGroupChat = c.isGroup();
 
-                    // --- THÊM LOG ĐỂ KIỂM TRA ---
-                    Log.d("ChatDebug", "Đây là nhóm? " + isGroupChat);
-
-                    // 1. Cập nhật Tên & Avatar (Dùng hàm thông minh trong Model)
-                    // Hàm này sẽ tự xử lý: Nếu là Group lấy tên nhóm, nếu 1-1 lấy tên người kia
+                    // 1. Cập nhật Tên & Avatar
                     String smartName = c.getDisplayName(currentUserId);
                     tvName.setText(smartName);
 
@@ -330,7 +432,7 @@ public class ChatDetailActivity extends AppCompatActivity {
                         ivCall.setVisibility(View.VISIBLE);
                     }
 
-                    // 3. Cập nhật trạng thái cho Adapter tin nhắn (để hiển thị avatar nhỏ hay không)
+                    // 3. Cập nhật trạng thái cho Adapter tin nhắn
                     if (messageAdapter != null) {
                         messageAdapter.setGroupChat(isGroupChat);
                     }
@@ -339,15 +441,14 @@ public class ChatDetailActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Call<List<Conversation>> call, Throwable t) {
-                // --- ĐÂY LÀ CHỖ LOG LỖI MẠNG HOẶC SAI MODEL JSON ---
                 Log.e("ChatDebug", "Lỗi Nghiêm Trọng (Failure): " + t.getMessage());
-                t.printStackTrace(); // In toàn bộ chi tiết lỗi ra Logcat
+                t.printStackTrace();
             }
         });
     }
 
     /**
-     * Tải tin nhắn từ Server
+     * Tải tin nhắn từ Server (Chỉ dùng cho lần tải đầu tiên)
      */
     private void loadMessages() {
         String selectQuery = "*,sender:users!messages_sender_id_fkey(user_id,full_name,avatar_url)";
@@ -358,57 +459,72 @@ public class ChatDetailActivity extends AppCompatActivity {
                     public void onResponse(Call<List<Message>> call, Response<List<Message>> response) {
                         if (response.isSuccessful() && response.body() != null) {
                             List<Message> newMessages = response.body();
-                            messageAdapter.submitList(newMessages);
 
-                            // Cuộn xuống nếu có tin nhắn mới
-                            if (newMessages.size() > lastMessageCount) {
-                                recyclerViewMessages.scrollToPosition(newMessages.size() - 1);
+                            // Thiết lập trạng thái cho tin nhắn cũ ---
+                            for (Message msg : newMessages) {
+                                // Tin nhắn cũ, đã có created_at, luôn được coi là đã SENT
+                                msg.setStatus(Message.SendStatus.SENT);
                             }
-                            lastMessageCount = newMessages.size();
+
+                            // Sử dụng submitList với callback để đảm bảo cuộn sau khi list được cập nhật
+                            messageAdapter.submitList(newMessages, () -> {
+                                if (newMessages.size() > 0) {
+                                    recyclerViewMessages.scrollToPosition(newMessages.size() - 1);
+                                }
+                            });
                         }
                     }
                     @Override
-                    public void onFailure(Call<List<Message>> call, Throwable t) {}
+                    public void onFailure(Call<List<Message>> call, Throwable t) {
+                        Log.e("ChatDebug", "Lỗi tải tin nhắn ban đầu: " + t.getMessage());
+                    }
                 });
     }
 
+
     /**
-     * Gửi tin nhắn (Optimistic Update - Hiện ngay lập tức)
+     * Gửi tin nhắn (Optimistic Update)
      */
     private void sendMessage() {
         String content = etMessageInput.getText().toString().trim();
         if (content.isEmpty()) return;
 
-        // 1. Tạo tin nhắn giả lập để hiện ngay
+        // 1. Tạo temp id để map local ↔ server
+        String tempId = java.util.UUID.randomUUID().toString();
+
+        // 2. Tạo message local (Optimistic)
         Message localMsg = new Message();
         localMsg.setConversationId(conversationId);
         localMsg.setSenderId(currentUserId);
         localMsg.setContent(content);
         localMsg.setMessageType("text");
-        localMsg.setCreatedAt(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault()).format(new Date()));
+        localMsg.setClientTempId(tempId);
+        localMsg.setLocalCreatedAt(System.currentTimeMillis());
+        localMsg.setCreatedAt(null);
+        localMsg.setStatus(Message.SendStatus.SENDING);
+        localMsg.setSender(currentUserProfile);
 
-        // 2. Add vào adapter ngay lập tức
-        messageAdapter.addLocalMessage(localMsg);
+        // 3. Hiển thị ngay
+        messageAdapter.addMessage(localMsg);
         recyclerViewMessages.scrollToPosition(messageAdapter.getItemCount() - 1);
         etMessageInput.setText("");
 
-        // 3. Gọi API gửi ngầm
+        // 4. Gửi lên server
         Map<String, Object> body = new HashMap<>();
         body.put("conversation_id", conversationId);
         body.put("sender_id", currentUserId);
         body.put("content", content);
         body.put("message_type", "text");
+        body.put("client_temp_id", tempId);
 
         apiService.sendMessage(authToken, apiKey, body).enqueue(new Callback<Void>() {
             @Override
             public void onResponse(Call<Void> call, Response<Void> response) {
-                if (response.isSuccessful()) {
-                    lastMessageCount = 0;
-                    loadMessages(); // Đồng bộ lại ID thật từ server
-                } else {
+                if (!response.isSuccessful()) {
                     Toast.makeText(ChatDetailActivity.this, "Gửi thất bại", Toast.LENGTH_SHORT).show();
                 }
             }
+
             @Override
             public void onFailure(Call<Void> call, Throwable t) {
                 Toast.makeText(ChatDetailActivity.this, "Lỗi mạng", Toast.LENGTH_SHORT).show();
@@ -416,27 +532,15 @@ public class ChatDetailActivity extends AppCompatActivity {
         });
     }
 
-    // --- Polling ---
-    private void initPolling() {
-        pollingHandler = new Handler(Looper.getMainLooper());
-        pollingRunnable = new Runnable() {
-            @Override
-            public void run() {
-                loadMessages();
-                pollingHandler.postDelayed(this, POLLING_INTERVAL);
-            }
-        };
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        SupabaseRealtimeClient realtime = SupabaseRealtimeClient.getInstance();
+
+        if (messageInsertListener != null) {
+            realtime.unsubscribe("messages", "INSERT", messageInsertListener);
+        }
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        if (pollingHandler != null) pollingHandler.post(pollingRunnable);
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        if (pollingHandler != null) pollingHandler.removeCallbacks(pollingRunnable);
-    }
 }

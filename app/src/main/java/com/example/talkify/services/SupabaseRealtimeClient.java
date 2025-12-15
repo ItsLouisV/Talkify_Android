@@ -107,6 +107,7 @@ public class SupabaseRealtimeClient {
 
             @Override
             public void onMessage(WebSocket ws, String text) {
+                Log.d("SupabaseRealtime_RAW", "Received: " + text);
                 try {
                     JSONObject obj = new JSONObject(text);
                     if (obj.has("payload")) {

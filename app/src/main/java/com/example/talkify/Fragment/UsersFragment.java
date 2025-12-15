@@ -152,7 +152,7 @@ public class UsersFragment extends Fragment
     }
 
     /**
-     * Tải danh sách lời mời kết bạn VÀ xử lý logic ẩn/hiện. (Giữ nguyên)
+     * Tải danh sách lời mời kết bạn VÀ xử lý logic ẩn/hiện.
      */
     private void loadFriendRequests() {
         // Câu select này join sender_id với bảng users và đặt tên là "sender"
@@ -194,7 +194,7 @@ public class UsersFragment extends Fragment
         Map<String, String> rpcBody = new HashMap<>();
         rpcBody.put("current_user_id", currentUserId);
 
-        // 1. GỌI HÀM API MỚI (từ Bước 2)
+        // 1. GỌI HÀM API MỚI
         apiService.getUserSuggestionsWithStatus(authToken, apiKey, rpcBody)
                 .enqueue(new Callback<List<User>>() {
                     @Override
@@ -202,7 +202,7 @@ public class UsersFragment extends Fragment
                         if (response.isSuccessful() && response.body() != null) {
                             List<User> users = response.body();
 
-                            // 2. "MỒI" TRẠNG THÁI CHO ADAPTER (từ Bước 3)
+                            // 2. "MỒI" TRẠNG THÁI CHO ADAPTER
                             // Hàm này sẽ đọc (user.getRequestStatus())
                             // và "dạy" adapter biết ai là 'sent'
                             userSuggestionAdapter.primeSentStates(users);

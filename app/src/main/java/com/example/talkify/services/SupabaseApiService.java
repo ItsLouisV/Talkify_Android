@@ -167,6 +167,15 @@ public interface SupabaseApiService {
             @Query("order") String order
     );
 
+    // Lấy chi tiết 1 tin nhắn theo ID (dùng cho Realtime để tải thông tin JOIN)
+    @GET("messages")
+    Call<List<Message>> getMessageById(
+            @Header(AUTH_HEADER) String authorization,
+            @Header(API_KEY_HEADER) String apiKey,
+            @Query("message_id") String messageId, // Filter: message_id=eq.{UUID}
+            @Query("select") String select
+    );
+
     // Gửi tin nhắn
     @POST("messages")
     Call<Void> sendMessage(
@@ -278,6 +287,7 @@ public interface SupabaseApiService {
             @Header(AUTH_HEADER) String authorization,
             @Header(API_KEY_HEADER) String apiKey,
             @Query("user_id") String receiverId,
+            @Query("notification_id") String notificationIdFilter,
             @Query("select") String select,
             @Query("order") String order
     );

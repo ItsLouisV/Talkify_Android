@@ -104,6 +104,7 @@ public class NotificationsFragment extends Fragment {
                 authToken,
                 apiKey,
                 "eq." + currentUserId, // <--- QUAN TRỌNG: Phải có "eq."
+                null,
                 select,
                 "created_at.desc"      // Sắp xếp mới nhất lên đầu
         ).enqueue(new Callback<List<AppNotification>>() {

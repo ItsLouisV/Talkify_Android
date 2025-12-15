@@ -31,7 +31,7 @@
             android:layout_height="40dp"
             android:layout_marginStart="12dp"
             android:background="@drawable/bg_input"
-            android:hint="Tìm kiếm bạn bè..."
+            android:hint="Tìm kiếm"
             android:textColor="@android:color/white"
             android:textColorHint="@android:color/darker_gray"
             android:paddingHorizontal="16dp"

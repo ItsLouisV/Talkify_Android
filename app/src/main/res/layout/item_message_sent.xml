@@ -17,7 +17,7 @@
             android:id="@+id/tvMessage"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:maxWidth="320dp"
+            android:maxWidth="300dp"
             android:background="@drawable/bg_message_sent"
             android:padding="12dp"
             android:text="This is a sent message example. This is just example"

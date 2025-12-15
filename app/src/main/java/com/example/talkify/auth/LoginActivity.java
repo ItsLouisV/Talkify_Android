@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -33,7 +34,8 @@ public class LoginActivity extends AppCompatActivity {
     private static final String TAG = "LoginActivity";
 
     private TextInputEditText etEmail, etPassword;
-    private Button btnLogin, btnGoogle, btnFacebook;
+    private Button btnLogin;
+    private ImageView btnGoogle, btnFacebook;
     private TextView tvRegister;
 
     private SharedPrefManager prefManager;
@@ -212,7 +214,6 @@ public class LoginActivity extends AppCompatActivity {
                     JsonObject userObj = resJson.getAsJsonObject("user");
                     String userId = userObj.get("id").getAsString();
 
-                    // === SỬA ĐỔI ===
                     // (Không lưu và chuyển màn hình vội)
                     // (Gọi Bước 2: Lấy hồ sơ)
                     fetchUserProfileAndProceed(userId, email, accessToken, refreshToken);

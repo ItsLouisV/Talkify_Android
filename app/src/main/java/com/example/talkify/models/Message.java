@@ -1,4 +1,5 @@
 package com.example.talkify.models;
+import org.json.JSONObject;
 
 import com.google.gson.annotations.SerializedName;
 
@@ -17,7 +18,7 @@ public class Message {
     private String content;
 
     @SerializedName("created_at")
-    private String createdAt; // Hoặc dùng Date
+    private String createdAt;
 
     @SerializedName("message_type")
     private String messageType;
@@ -29,6 +30,56 @@ public class Message {
 
     // (Constructor rỗng)
     public Message() {}
+
+    public Message(Message other) {
+        this.messageId = other.messageId;
+        this.conversationId = other.conversationId;
+        this.senderId = other.senderId;
+        this.content = other.content;
+        this.createdAt = other.createdAt;
+        this.messageType = other.messageType;
+        this.sender = other.sender;
+        this.clientTempId = other.clientTempId;
+        this.status = other.status;
+    }
+
+
+    @SerializedName("client_temp_id")
+    private String clientTempId;
+
+    public String getClientTempId() {
+        return clientTempId;
+    }
+
+    public void setClientTempId(String clientTempId) {
+        this.clientTempId = clientTempId;
+    }
+
+    private long localCreatedAt;
+
+    public long getLocalCreatedAt() {
+        return localCreatedAt;
+    }
+
+    public void setLocalCreatedAt(long localCreatedAt) {
+        this.localCreatedAt = localCreatedAt;
+    }
+
+    public enum SendStatus {
+        SENDING,   // đang gửi
+        SENT,      // server xác nhận
+        FAILED     // lỗi
+    }
+
+    private SendStatus status = SendStatus.SENT;
+
+    public SendStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(SendStatus status) {
+        this.status = status;
+    }
 
     // (Getters và Setters)
 
@@ -52,4 +103,23 @@ public class Message {
 
     public User getSender() { return sender; }
     public void setSender(User sender) { this.sender = sender; }
+
+
+
+    public static Message fromRealtimeJson(JSONObject json) {
+        Message m = new Message();
+
+        m.setMessageId(json.optString("message_id"));
+        m.setConversationId(json.optString("conversation_id"));
+        m.setSenderId(json.optString("sender_id"));
+        m.setContent(json.optString("content"));
+        m.setCreatedAt(json.optString("created_at"));
+        m.setMessageType(json.optString("message_type"));
+        m.setClientTempId(json.optString("client_temp_id", null));
+
+        m.setStatus(SendStatus.SENT);
+        m.setSender(null);
+
+        return m;
+    }
 }

@@ -1,6 +1,7 @@
 package com.example.talkify.adapters;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -83,23 +84,23 @@ public class MessageAdapter extends ListAdapter<Message, RecyclerView.ViewHolder
     }
 
     // --- HÀM TIỆN ÍCH: Format thời gian ---
-    // Chuyển từ chuỗi ISO 8601 (vd: 2023-11-20T10:30:00Z) sang giờ phút (10:30)
     private static String formatTime(String isoTime) {
         if (isoTime == null || isoTime.isEmpty()) return "";
+
         try {
-            // Định dạng đầu vào từ Supabase (thường là UTC)
-            SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault());
-            inputFormat.setTimeZone(TimeZone.getTimeZone("UTC")); // Giả sử server lưu UTC
+            // Supabase timestamptz: 2025-12-15T17:53:43.245561+00:00
+            SimpleDateFormat inputFormat =
+                    new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSXXX", Locale.getDefault());
 
             Date date = inputFormat.parse(isoTime);
 
-            // Định dạng đầu ra (Giờ:Phút theo giờ máy)
-            SimpleDateFormat outputFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
-            // outputFormat tự động dùng TimeZone của điện thoại
+            SimpleDateFormat outputFormat =
+                    new SimpleDateFormat("HH:mm", Locale.getDefault());
 
             return outputFormat.format(date);
+
         } catch (Exception e) {
-            // Nếu lỗi parse (do format khác), trả về nguyên gốc hoặc chuỗi rỗng
+            e.printStackTrace();
             return "";
         }
     }
@@ -114,9 +115,15 @@ public class MessageAdapter extends ListAdapter<Message, RecyclerView.ViewHolder
         }
         void bind(Message message) {
             tvMessage.setText(message.getContent());
-            // Xử lý hiển thị giờ nếu cần (dùng message.getCreatedAt())
-            tvTimestamp.setText(formatTime(message.getCreatedAt()));
+
+            // Ưu tiên server time, fallback local time
+            if (message.getCreatedAt() != null) {
+                tvTimestamp.setText(formatTime(message.getCreatedAt()));
+            } else {
+                tvTimestamp.setText(formatLocalTime(message.getLocalCreatedAt()));
+            }
         }
+
     }
 
     // --- ViewHolder NHẬN ---
@@ -155,36 +162,76 @@ public class MessageAdapter extends ListAdapter<Message, RecyclerView.ViewHolder
         }
     }
 
-    // --- SỬA 2: Hàm thêm tin nhắn local ---
-    public void addLocalMessage(Message message) {
+    // --- Hàm thêm tin nhắn ---
+    public void addMessage(Message message) {
         List<Message> currentList = getCurrentList();
         ArrayList<Message> newList = new ArrayList<>(currentList);
         newList.add(message);
         submitList(newList);
     }
 
-    // --- SỬA 3: DiffUtil AN TOÀN (CHỐNG CRASH) ---
+    private static String formatLocalTime(long millis) {
+        if (millis <= 0) return "";
+
+        return new SimpleDateFormat("HH:mm", Locale.getDefault())
+                .format(new Date(millis));
+    }
+
+    public void replaceTempMessage(
+            String tempId,
+            String realMessageId,
+            String createdAt
+    ) {
+        List<Message> currentList = getCurrentList();
+        List<Message> newList = new ArrayList<>();
+
+        boolean updated = false;
+
+        for (Message old : currentList) {
+            if (tempId != null && tempId.equals(old.getClientTempId())) {
+
+                // TẠO OBJECT MỚI
+                Message updatedMessage = new Message(old);
+
+                updatedMessage.setMessageId(realMessageId);
+                updatedMessage.setCreatedAt(createdAt);
+                updatedMessage.setStatus(Message.SendStatus.SENT);
+                updatedMessage.setClientTempId(null);
+
+                newList.add(updatedMessage);
+                updated = true;
+
+            } else {
+                newList.add(old);
+            }
+        }
+
+        if (updated) {
+            submitList(newList);
+        }
+    }
+
+    // --- DiffUtil AN TOÀN ---
     private static final DiffUtil.ItemCallback<Message> MESSAGE_DIFF_CALLBACK =
             new DiffUtil.ItemCallback<Message>() {
                 @Override
-                public boolean areItemsTheSame(@NonNull Message oldItem, @NonNull Message newItem) {
-                    // Kiểm tra null trước khi so sánh equals
-                    String oldId = oldItem.getMessageId();
-                    String newId = newItem.getMessageId();
-
-                    // Nếu 1 trong 2 bị null (do tạo local chưa kịp có ID), coi như khác nhau để vẽ lại
-                    if (oldId == null || newId == null) {
-                        return false;
+                public boolean areItemsTheSame(@NonNull Message old, @NonNull Message newMsg) {
+                    // Ưu tiên messageId nếu có
+                    if (old.getMessageId() != null && newMsg.getMessageId() != null) {
+                        return old.getMessageId().equals(newMsg.getMessageId());
                     }
-                    return oldId.equals(newId);
+
+                    // Fallback cho optimistic
+                    return old.getClientTempId() != null
+                            && old.getClientTempId().equals(newMsg.getClientTempId());
                 }
 
+
                 @Override
-                public boolean areContentsTheSame(@NonNull Message oldItem, @NonNull Message newItem) {
-                    // Kiểm tra null cho nội dung
-                    String oldContent = oldItem.getContent();
-                    String newContent = newItem.getContent();
-                    return Objects.equals(oldContent, newContent);
+                public boolean areContentsTheSame(@NonNull Message o, @NonNull Message n) {
+                    return Objects.equals(o.getStatus(), n.getStatus())
+                            && Objects.equals(o.getCreatedAt(), n.getCreatedAt())
+                            && Objects.equals(o.getContent(), n.getContent());
                 }
             };
 }

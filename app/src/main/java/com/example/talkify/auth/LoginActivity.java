@@ -12,6 +12,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.talkify.BuildConfig;
 import com.example.talkify.MainActivity;
 import com.example.talkify.R;
 import com.example.talkify.services.SharedPrefManager;
@@ -43,8 +44,7 @@ public class LoginActivity extends AppCompatActivity {
 
     // Google Sign-In
     private GoogleSignInClient mGoogleSignInClient;
-    private static final String GOOGLE_ANDROID_CLIENT_ID =
-            "677059573412-fi4ftvk1abt49r179epmbijpj2276k2v.apps.googleusercontent.com";
+    private static final String GOOGLE_ANDROID_CLIENT_ID = BuildConfig.GOOGLE_CLIENT_ID;
 
     // (Lưu ý: Bạn phải thêm hàm saveUserSession vào SharedPrefManager)
 
@@ -157,6 +157,10 @@ public class LoginActivity extends AppCompatActivity {
             }
 
             @Override public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                if (response.body() == null) {
+                    runOnUiThread(() -> Toast.makeText(LoginActivity.this, "Lỗi: Phản hồi từ server rỗng.", Toast.LENGTH_SHORT).show());
+                    return;
+                }
                 String resStr = response.body().string();
                 if (response.isSuccessful()) {
                     JsonObject resJson = gson.fromJson(resStr, JsonObject.class);
@@ -204,6 +208,10 @@ public class LoginActivity extends AppCompatActivity {
             }
 
             @Override public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                if (response.body() == null) {
+                    runOnUiThread(() -> Toast.makeText(LoginActivity.this, "Lỗi: Phản hồi từ server rỗng.", Toast.LENGTH_SHORT).show());
+                    return;
+                }
                 String resStr = response.body().string();
                 if (response.isSuccessful()) {
                     JsonObject resJson = gson.fromJson(resStr, JsonObject.class);
@@ -249,6 +257,10 @@ public class LoginActivity extends AppCompatActivity {
 
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                if (response.body() == null) {
+                    runOnUiThread(() -> Toast.makeText(LoginActivity.this, "Lỗi: Phản hồi từ server rỗng.", Toast.LENGTH_SHORT).show());
+                    return;
+                }
                 String resStr = response.body().string();
                 if (response.isSuccessful()) {
                     // Kết quả là một mảng JSON: "[{...}]"
